@@ -2,6 +2,13 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.2.0] - 2026-03-31
+
+### Added
+- **Refined Dynamic Activity Log**: Updated the activity log to show real-time progress through specific stages: 'Planning', 'Searching', 'Fetching', and 'Synthesizing'.
+- **Status Indicators**: Added visual status indicators (Active, Completed, Pending) to the activity log for better user feedback.
+- **Real-time Timestamps**: Integrated real-time timestamps for each stage of the research process.
+
 ## [1.1.0] - 2026-03-31
 
 ### Added
