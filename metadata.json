@@ -1,0 +1,5 @@
+{
+  "name": "Deep Research Agent",
+  "description": "An autonomous research agent that plans, searches, fetches, and synthesizes high-quality reports with citations.",
+  "requestFramePermissions": []
+}
