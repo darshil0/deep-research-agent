@@ -75,24 +75,22 @@ async function startServer() {
   // API: Get Results
   app.get("/api/results", (req, res) => {
     const id = req.query.id as string;
-    const baseDir = id ? path.join("research_outputs", id) : path.join("research_outputs");
+    const historyDir = path.join(process.cwd(), "research_outputs");
     
-    // If no ID, try to find the most recent one
-    let targetDir = baseDir;
-    if (!id) {
-      const historyDir = path.join(process.cwd(), "research_outputs");
-      if (fs.existsSync(historyDir)) {
-        const folders = fs.readdirSync(historyDir)
-          .filter(f => fs.lstatSync(path.join(historyDir, f)).isDirectory())
-          .sort((a, b) => parseInt(b.split("_")[0]) - parseInt(a.split("_")[0]));
-        if (folders.length > 0) {
-          targetDir = path.join(historyDir, folders[0]);
-        }
+    let targetDir = historyDir;
+    if (id) {
+      targetDir = path.join(historyDir, id);
+    } else if (fs.existsSync(historyDir)) {
+      const folders = fs.readdirSync(historyDir)
+        .filter(f => fs.lstatSync(path.join(historyDir, f)).isDirectory())
+        .sort((a, b) => parseInt(b.split("_")[0]) - parseInt(a.split("_")[0]));
+      if (folders.length > 0) {
+        targetDir = path.join(historyDir, folders[0]);
       }
     }
 
-    const reportPath = path.join(process.cwd(), targetDir, "report.md");
-    const artifactsPath = path.join(process.cwd(), targetDir, "artifacts.json");
+    const reportPath = path.join(targetDir, "report.md");
+    const artifactsPath = path.join(targetDir, "artifacts.json");
 
     if (fs.existsSync(reportPath)) {
       const report = fs.readFileSync(reportPath, "utf-8");

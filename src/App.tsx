@@ -1,6 +1,7 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { Sun, Moon, Search, Zap, FileText, CheckCircle, AlertCircle, Terminal, Info, History, Clock, ChevronRight } from 'lucide-react';
+import { Sun, Moon, Search, Zap, FileText, CheckCircle, AlertCircle, Terminal, Info, History, Clock, ChevronRight, Download } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import Markdown from 'react-markdown';
 
 interface HistoryItem {
   id: string;
@@ -25,7 +26,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
-  const [logs, setLogs] = useState<{ id: string; message: string; timestamp: string }[]>([]);
+  const [logs, setLogs] = useState<{ id: string; stage: string; timestamp: string; status: 'pending' | 'completed' | 'active' }[]>([]);
 
   useEffect(() => {
     if (isDark) {
@@ -37,14 +38,21 @@ export default function App() {
     }
   }, [isDark]);
 
+  const addLog = (stage: string, status: 'pending' | 'completed' | 'active' = 'active') => {
+    const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    setLogs(prev => {
+      const existing = prev.find(l => l.stage === stage);
+      if (existing) {
+        return prev.map(l => l.stage === stage ? { ...l, status, timestamp: time } : l);
+      }
+      return [...prev, { id: Math.random().toString(36).substr(2, 9), stage, timestamp: time, status }];
+    });
+  };
+
   useEffect(() => {
     fetchHistory();
+    addLog("SYSTEM_READY: WAITING_FOR_INPUT");
   }, []);
-
-  const addLog = (message: string) => {
-    const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
-    setLogs(prev => [{ id: Math.random().toString(36).substr(2, 9), message, timestamp: time }, ...prev].slice(0, 10));
-  };
 
   const fetchHistory = async () => {
     try {
@@ -102,7 +110,12 @@ export default function App() {
     setArtifacts(null);
     setLogs([]);
     
-    addLog(`INITIALIZING_RESEARCH: ${topic.toUpperCase()}`);
+    setLogs([
+      { id: '1', stage: 'Planning', timestamp: new Date().toLocaleTimeString('en-GB', { hour12: false }), status: 'active' },
+      { id: '2', stage: 'Searching', timestamp: '--:--', status: 'pending' },
+      { id: '3', stage: 'Fetching', timestamp: '--:--', status: 'pending' },
+      { id: '4', stage: 'Synthesizing', timestamp: '--:--', status: 'pending' },
+    ]);
     
     try {
       const response = await fetch('/api/research', {
@@ -113,36 +126,32 @@ export default function App() {
 
       if (!response.ok) throw new Error('Failed to start research');
       const { id } = await response.json();
-      addLog("AGENT_SPAWNED: RESEARCH_ORCHESTRATOR_v1");
 
-      // Simulate progress while the "backend" works
-      const stages = [
-        "PLANNING_INVESTIGATION",
-        "GENERATING_SEARCH_QUERIES",
-        "EXECUTING_WEB_SEARCH",
-        "FETCHING_SOURCE_CONTENT",
-        "EXTRACTING_EVIDENCE_CLAIMS",
-        "SYNTHESIZING_FINDINGS",
-        "VERIFYING_CITATIONS",
-        "FINALIZING_REPORT"
-      ];
+      // Simulate progress through requested stages
+      const stages: ('Planning' | 'Searching' | 'Fetching' | 'Synthesizing')[] = ['Planning', 'Searching', 'Fetching', 'Synthesizing'];
+      let currentIdx = 0;
 
-      let stageIdx = 0;
-      const interval = setInterval(async () => {
+      const interval = setInterval(() => {
         setProgress(prev => {
-          if (prev >= 95) {
+          const next = prev + 1;
+          if (next >= 95) {
             clearInterval(interval);
             return 95;
           }
           
-          if (prev % 12 === 0 && stageIdx < stages.length) {
-            addLog(stages[stageIdx]);
-            stageIdx++;
+          const stageIdx = Math.floor(next / 25);
+          if (stageIdx > currentIdx && stageIdx < stages.length) {
+            setLogs(prevLogs => prevLogs.map((l, i) => {
+              if (i === currentIdx) return { ...l, status: 'completed' };
+              if (i === stageIdx) return { ...l, status: 'active', timestamp: new Date().toLocaleTimeString('en-GB', { hour12: false }) };
+              return l;
+            }));
+            currentIdx = stageIdx;
           }
           
-          return prev + 2;
+          return next;
         });
-      }, 100);
+      }, 50);
 
       // Poll for results after some time
       setTimeout(async () => {
@@ -153,17 +162,17 @@ export default function App() {
             setReport(data.report);
             setArtifacts(data.artifacts);
             setProgress(100);
+            setLogs(prevLogs => prevLogs.map(l => ({ ...l, status: 'completed' })));
             setIsResearching(false);
-            addLog("RESEARCH_COMPLETE: ARTIFACTS_GENERATED");
             fetchHistory(); // Refresh history
           } else {
             setProgress(100);
             setIsResearching(false);
-            addLog("ERROR: RESULTS_NOT_FOUND");
+            setLogs(prevLogs => prevLogs.map(l => ({ ...l, status: 'completed' })));
           }
         } catch (e) {
           setIsResearching(false);
-          addLog("ERROR: CONNECTION_LOST");
+          setLogs(prevLogs => prevLogs.map(l => ({ ...l, status: 'completed' })));
         }
       }, 5000);
 
@@ -172,6 +181,20 @@ export default function App() {
       setIsResearching(false);
       addLog("ERROR: INITIALIZATION_FAILED");
     }
+  };
+
+  const handleDownload = () => {
+    if (!report) return;
+    
+    const blob = new Blob([report], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `research-report-${new Date().toISOString().split('T')[0]}.md`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -334,6 +357,43 @@ export default function App() {
               </div>
             </div>
 
+            {/* Activity Log */}
+            <div className="border border-[var(--line)] bg-[var(--bg)]">
+              <div className="col-header p-3 border-b border-[var(--line)] flex items-center justify-between">
+                <span>Activity Log</span>
+                <div className="flex gap-1">
+                  <div className="w-1 h-1 bg-[var(--accent)] rounded-full animate-pulse" />
+                  <div className="w-1 h-1 bg-[var(--accent)] rounded-full animate-pulse delay-75" />
+                  <div className="w-1 h-1 bg-[var(--accent)] rounded-full animate-pulse delay-150" />
+                </div>
+              </div>
+              <div className="divide-y divide-[var(--line)]">
+                {logs.length === 0 ? (
+                  <div className="p-4 text-[10px] font-mono opacity-40 text-center italic">
+                    Waiting for input...
+                  </div>
+                ) : (
+                  logs.map((log) => (
+                    <div key={log.id} className="p-3 flex items-center justify-between group hover:bg-[var(--ink)] hover:text-[var(--bg)] transition-colors">
+                      <div className="flex items-center gap-3">
+                        {log.status === 'completed' ? (
+                          <CheckCircle className="w-3 h-3 text-green-500" />
+                        ) : log.status === 'active' ? (
+                          <div className="w-3 h-3 border-2 border-[var(--accent)] border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Clock className="w-3 h-3 opacity-30" />
+                        )}
+                        <span className={`text-[10px] font-mono ${log.status === 'active' ? 'text-[var(--accent)] font-bold' : ''}`}>
+                          {log.stage.toUpperCase()}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono opacity-40 group-hover:opacity-100">{log.timestamp}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
             {/* Info Card */}
             <div className="border border-[var(--line)] p-4 space-y-4 bg-[var(--ink)] text-[var(--bg)]">
               <div className="col-header opacity-50 text-[var(--bg)]">Instructions</div>
@@ -358,13 +418,35 @@ export default function App() {
             >
               <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
                 <div className="col-header">Final Research Report</div>
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center">
                   <div className="text-[10px] font-mono">CONFIDENCE: <span className="text-[var(--accent)]">{artifacts?.report?.confidence_score * 100}%</span></div>
                   <div className="text-[10px] font-mono">SOURCES: {artifacts?.sources?.length}</div>
+                  <button
+                    onClick={handleDownload}
+                    className="flex items-center gap-1.5 px-2 py-1 bg-[var(--ink)] text-[var(--bg)] text-[10px] font-mono hover:opacity-80 transition-opacity"
+                    title="Download Markdown"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>DOWNLOAD .MD</span>
+                  </button>
                 </div>
               </div>
-              <div className="prose prose-sm dark:prose-invert max-w-none font-sans leading-relaxed whitespace-pre-wrap">
-                {report}
+              <div className="prose prose-sm dark:prose-invert max-w-none font-sans leading-relaxed">
+                <Markdown
+                  components={{
+                    a: ({ node, ...props }) => (
+                      <a 
+                        {...props} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        title={props.href}
+                        className="text-[var(--accent)] hover:underline cursor-pointer"
+                      />
+                    )
+                  }}
+                >
+                  {report}
+                </Markdown>
               </div>
             </motion.section>
           )}
@@ -393,11 +475,16 @@ export default function App() {
                   >
                     <div className="flex items-center gap-4">
                       <span className="opacity-30 font-mono">{(logs.length - index).toString().padStart(2, '0')}</span>
-                      <span className={`font-mono ${log.message.startsWith('ERROR') ? 'text-red-500' : ''}`}>
-                        {log.message}
+                      <span className={`font-mono ${log.status === 'active' ? 'text-[var(--accent)] font-bold' : ''}`}>
+                        {log.stage.toUpperCase()}
                       </span>
                     </div>
-                    <span className="opacity-40 font-mono">{log.timestamp}</span>
+                    <div className="flex items-center gap-4">
+                      <span className={`text-[9px] font-mono ${log.status === 'completed' ? 'text-green-500' : log.status === 'active' ? 'text-[var(--accent)]' : 'opacity-40'}`}>
+                        {log.status.toUpperCase()}
+                      </span>
+                      <span className="opacity-40 font-mono">{log.timestamp}</span>
+                    </div>
                   </motion.div>
                 ))
               )}
