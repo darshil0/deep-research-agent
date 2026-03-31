@@ -107,7 +107,7 @@ export default function App() {
   const downloadReport = () => {
     if (!state?.report) return;
     const report = state.report;
-    const markdown = `# ${report.query}\n\n## Summary\n${report.summary}\n\n## Findings\n${report.content}\n\n## Sources\n${report.citations.map((c, i) => `[${i + 1}] ${c.title} - ${c.url}`).join("\n")}`;
+    const markdown = `# ${report.query}\n\n## Summary\n${report.summary}\n\n${report.content}`;
     const blob = new Blob([markdown], { type: "text/markdown" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -138,15 +138,15 @@ export default function App() {
       
       {/* Header */}
       <header id="main-header" className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
-              <Search className="w-5 h-5 text-white" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <h1 className="text-lg font-semibold tracking-tight">Deep Research Agent</h1>
+            <h1 className="text-base sm:text-lg font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">Deep Research Agent</h1>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button 
               id="settings-toggle"
               onClick={() => setShowSettings(!showSettings)}
@@ -154,21 +154,21 @@ export default function App() {
             >
               <Settings className="w-5 h-5" />
             </button>
-            <div className="h-4 w-[1px] bg-white/10" />
-            <div className="text-xs font-mono text-white/40 uppercase tracking-widest">v1.4.0</div>
+            <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">v1.4.0</div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
           
           {/* Left Column: Input & Progress */}
-          <div className="lg:col-span-5 space-y-8">
+          <div className="md:col-span-5 space-y-8">
             <section className="space-y-6">
               <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">What would you like to research?</h2>
-                <p className="text-white/50 text-lg">Enter a complex query and our agent will perform deep research for you.</p>
+                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">What would you like to research?</h2>
+                <p className="text-white/50 text-base sm:text-lg">Enter a complex query and our agent will perform deep research for you.</p>
               </div>
 
               <form onSubmit={handleStartResearch} className="relative group">
@@ -176,16 +176,16 @@ export default function App() {
                   type="text"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g., The impact of quantum computing on modern cryptography..."
+                  placeholder="e.g., The impact of quantum computing..."
                   disabled={isResearching}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:border-white/20 placeholder:text-white/20"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 sm:px-6 py-4 sm:py-5 pr-14 sm:pr-16 text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:border-white/20 placeholder:text-white/20"
                 />
                 <button
                   type="submit"
                   disabled={isResearching || !query.trim()}
-                  className="absolute right-3 top-3 bottom-3 px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-white/20 text-white rounded-xl transition-all flex items-center justify-center shadow-lg shadow-blue-600/20"
+                  className="absolute right-2 top-2 bottom-2 px-3 sm:px-4 bg-blue-600 hover:bg-blue-500 disabled:bg-white/10 disabled:text-white/20 text-white rounded-xl transition-all flex items-center justify-center shadow-lg shadow-blue-600/20"
                 >
-                  {isResearching ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-6 h-6" />}
+                  {isResearching ? <Loader2 className="w-5 h-5 animate-spin" /> : <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6" />}
                 </button>
               </form>
 
@@ -193,14 +193,14 @@ export default function App() {
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-6"
+                  className="bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 space-y-6"
                 >
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold">Research Settings</h3>
                     <button onClick={() => setShowSettings(false)} className="text-xs text-white/40 hover:text-white">Close</button>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="space-y-2">
                       <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Max Iterations</label>
                       <input 
@@ -224,11 +224,12 @@ export default function App() {
                   <div className="flex items-center gap-3">
                     <input 
                       type="checkbox" 
+                      id="full-page-fetch"
                       checked={config.useFullPageFetch}
                       onChange={(e) => setConfig({ ...config, useFullPageFetch: e.target.checked })}
                       className="w-4 h-4 rounded border-white/10 bg-black/40 text-blue-600 focus:ring-blue-500"
                     />
-                    <label className="text-sm text-white/60">Use full-page fetches for deep analysis</label>
+                    <label htmlFor="full-page-fetch" className="text-sm text-white/60">Use full-page fetches for deep analysis</label>
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-white/10">
@@ -245,7 +246,7 @@ export default function App() {
                       </button>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                       <div className="space-y-2">
                         <label htmlFor="date-range-select" className="text-xs text-white/40 uppercase tracking-wider font-semibold">Date Range</label>
                         <select 
@@ -311,7 +312,7 @@ export default function App() {
 
                   <div 
                     ref={scrollRef}
-                    className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10"
+                    className="space-y-3 max-h-[400px] sm:max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10"
                   >
                     {state.steps.map((step, i) => (
                       <motion.div 
@@ -319,7 +320,7 @@ export default function App() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         className={cn(
-                          "p-4 rounded-xl border transition-all",
+                          "p-3 sm:p-4 rounded-xl border transition-all",
                           step.status === "running" ? "bg-blue-500/5 border-blue-500/20" : "bg-white/5 border-white/10"
                         )}
                       >
@@ -348,7 +349,7 @@ export default function App() {
           </div>
 
           {/* Right Column: Results & Report */}
-          <div className="lg:col-span-7 relative">
+          <div className="md:col-span-7 relative">
             <AnimatePresence mode="wait">
               {!state?.report ? (
                 <motion.div 
@@ -356,20 +357,20 @@ export default function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="h-full min-h-[600px] flex flex-col items-center justify-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] p-12 text-center space-y-6 relative overflow-hidden"
+                  className="h-full min-h-[400px] sm:min-h-[600px] flex flex-col items-center justify-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] p-6 sm:p-12 text-center space-y-6 relative overflow-hidden"
                 >
                   {/* Atmospheric background elements */}
                   <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/5 rounded-full blur-[100px]" />
-                    <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px]" />
+                    <div className="absolute top-1/4 left-1/4 w-48 sm:w-64 h-48 sm:h-64 bg-blue-600/5 rounded-full blur-[80px] sm:blur-[100px]" />
+                    <div className="absolute bottom-1/4 right-1/4 w-48 sm:w-64 h-48 sm:h-64 bg-indigo-600/5 rounded-full blur-[80px] sm:blur-[100px]" />
                   </div>
 
-                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center relative z-10">
-                    <FileText className="w-10 h-10 text-white/20" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/5 rounded-full flex items-center justify-center relative z-10">
+                    <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-white/20" />
                   </div>
                   <div className="space-y-2 relative z-10">
-                    <h3 className="text-xl font-semibold">No Report Yet</h3>
-                    <p className="text-white/40 max-w-sm mx-auto">Start a research task to generate a comprehensive report with citations.</p>
+                    <h3 className="text-lg sm:text-xl font-semibold">No Report Yet</h3>
+                    <p className="text-white/40 max-w-sm mx-auto text-sm sm:text-base">Start a research task to generate a comprehensive report with citations.</p>
                   </div>
                 </motion.div>
               ) : (
@@ -380,21 +381,21 @@ export default function App() {
                   animate={{ opacity: 1, scale: 1 }}
                   className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative"
                 >
-                  <div className="p-8 border-b border-white/10 bg-white/[0.02]">
-                    <div className="flex items-center justify-between mb-6">
-                      <div className="px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-xs font-semibold border border-emerald-500/20">
+                  <div className="p-6 sm:p-8 border-b border-white/10 bg-white/[0.02]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                      <div className="w-fit px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] sm:text-xs font-semibold border border-emerald-500/20">
                         RESEARCH COMPLETE
                       </div>
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4">
                         <button 
                           id="download-report-btn"
                           onClick={downloadReport}
-                          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs transition-all"
+                          className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[10px] sm:text-xs transition-all"
                         >
                           <FileText className="w-3.5 h-3.5" />
                           DOWNLOAD .MD
                         </button>
-                        <div className="flex items-center gap-4 text-xs text-white/40 font-mono">
+                        <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs text-white/40 font-mono">
                           <div className="flex items-center gap-1.5">
                             <Clock className="w-3.5 h-3.5" />
                             {state.report.metadata.totalTime.toFixed(1)}s
@@ -406,23 +407,23 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <h2 className="text-4xl font-bold tracking-tight mb-4 leading-tight font-serif italic text-white/90">{state.report.query}</h2>
-                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
-                      <p className="text-white/80 leading-relaxed italic text-lg font-light">"{state.report.summary}"</p>
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 leading-tight font-serif italic text-white/90">{state.report.query}</h2>
+                    <div className="p-4 sm:p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                      <p className="text-white/80 leading-relaxed italic text-base sm:text-lg font-light">"{state.report.summary}"</p>
                     </div>
                   </div>
 
-                  <div className="p-8 space-y-12">
-                    <article className="prose prose-invert prose-blue max-w-none prose-headings:font-serif prose-headings:italic prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-white/80 prose-p:text-lg prose-p:font-light">
+                  <div className="p-6 sm:p-8 space-y-10 sm:space-y-12">
+                    <article className="prose prose-invert prose-blue max-w-none prose-headings:font-serif prose-headings:italic prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-white/80 prose-p:text-base sm:text-lg prose-p:font-light">
                       <ReactMarkdown>{state.report.content}</ReactMarkdown>
                     </article>
 
-                    <section className="space-y-6 pt-12 border-t border-white/10">
+                    <section className="space-y-6 pt-10 sm:pt-12 border-t border-white/10">
                       <div className="flex items-center gap-2">
                         <Info className="w-5 h-5 text-blue-400" />
-                        <h3 className="text-xl font-bold tracking-tight">Sources & Citations</h3>
+                        <h3 className="text-lg sm:text-xl font-bold tracking-tight">Sources & Citations</h3>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {state.report.citations.map((citation, i) => (
                           <a 
                             key={citation.id}
@@ -456,10 +457,10 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-white/10 mt-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white/20 text-xs font-mono">
+      <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-white/10 mt-12">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white/20 text-[10px] sm:text-xs font-mono text-center md:text-left">
           <div>© 2026 DEEP RESEARCH AGENT. ALL RIGHTS RESERVED.</div>
-          <div className="flex items-center gap-8">
+          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8">
             <a href="#" className="hover:text-white transition-colors">DOCUMENTATION</a>
             <a href="#" className="hover:text-white transition-colors">API REFERENCE</a>
             <a href="#" className="hover:text-white transition-colors">PRIVACY POLICY</a>
