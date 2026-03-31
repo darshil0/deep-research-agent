@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
@@ -8,6 +9,11 @@ import { ResearchConfig, ResearchState } from "./src/lib/agent/types.ts";
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  // Validate API Key
+  if (!process.env.GEMINI_API_KEY) {
+    console.error("CRITICAL: GEMINI_API_KEY is not set in environment variables.");
+  }
 
   app.use(express.json());
 

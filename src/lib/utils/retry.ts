@@ -23,15 +23,16 @@ export async function withRetry<T>(
         (err.status >= 500 && err.status <= 599) ||
         err.code === 'ECONNABORTED' ||
         err.code === 'ETIMEDOUT' ||
-        err.message?.includes('quota') ||
-        err.message?.includes('rate limit');
+        err.message?.toLowerCase().includes('quota') ||
+        err.message?.toLowerCase().includes('rate limit') ||
+        err.message?.toLowerCase().includes('timeout') ||
+        err.message?.toLowerCase().includes('network');
 
-      if (!isTransient && i < maxRetries) {
-        // If it's not clearly transient, we might still want to retry a few times for Gemini/Tavily
-        // but maybe with a shorter limit. For now, let's just retry all errors up to maxRetries.
+      // Do NOT retry on 400 Bad Request (except 429 which is handled above)
+      // Invalid API key is a 400 error.
+      if (!isTransient || i === maxRetries) {
+        throw lastError;
       }
-
-      if (i === maxRetries) break;
 
       const delay = initialDelay * Math.pow(2, i);
       console.warn(`Retry ${i + 1}/${maxRetries} after ${delay}ms due to: ${err.message || err}`);
