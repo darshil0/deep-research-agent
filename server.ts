@@ -1,12 +1,9 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
+import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
-import { fileURLToPath } from "url";
-import { spawn } from "child_process";
-import fs from "fs";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { ResearchOrchestrator } from "./src/lib/agent/orchestrator.ts";
+import { ResearchConfig, ResearchState } from "./src/lib/agent/types.ts";
 
 async function startServer() {
   const app = express();
@@ -14,91 +11,53 @@ async function startServer() {
 
   app.use(express.json());
 
-  // API: Run Research
-  app.post("/api/research", (req, res) => {
-    const { topic } = req.body;
-    if (!topic) {
-      return res.status(400).json({ error: "Topic is required" });
-    }
+  // In-memory storage for research tasks
+  const tasks = new Map<string, ResearchState>();
+  const clients = new Map<string, WebSocket>();
 
-    const timestamp = Date.now();
-    const slug = topic.toLowerCase().replace(/[^a-z0-9]/g, "-").slice(0, 30);
-    const folderName = `${timestamp}_${slug}`;
-    const outputDir = path.join("research_outputs", folderName);
-    
-    if (!fs.existsSync("research_outputs")) {
-      fs.mkdirSync("research_outputs");
-    }
-    if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir, { recursive: true });
-    }
+  // API routes
+  app.post("/api/research/start", async (req, res) => {
+    const { query, config } = req.body;
+    if (!query) return res.status(400).json({ error: "Query is required" });
 
-    // Copy the dummy files to the new folder for simulation
-    const dummyReport = path.join(process.cwd(), "research_outputs", "report.md");
-    const dummyArtifacts = path.join(process.cwd(), "research_outputs", "artifacts.json");
-    
-    if (fs.existsSync(dummyReport)) {
-      fs.copyFileSync(dummyReport, path.join(outputDir, "report.md"));
-    }
-    if (fs.existsSync(dummyArtifacts)) {
-      fs.copyFileSync(dummyArtifacts, path.join(outputDir, "artifacts.json"));
-    }
+    const taskId = Math.random().toString(36).substring(7);
+    const state: ResearchState = {
+      status: "idle",
+      steps: [],
+    };
+    tasks.set(taskId, state);
 
-    // Simulate a successful start
-    res.json({ 
-      status: "started", 
-      message: `Researching: ${topic}`,
-      id: folderName
-    });
-  });
-
-  // API: Get History
-  app.get("/api/history", (req, res) => {
-    const historyDir = path.join(process.cwd(), "research_outputs");
-    if (!fs.existsSync(historyDir)) {
-      return res.json([]);
-    }
-
-    const folders = fs.readdirSync(historyDir)
-      .filter(f => fs.lstatSync(path.join(historyDir, f)).isDirectory())
-      .map(f => {
-        const parts = f.split("_");
-        const timestamp = parseInt(parts[0]);
-        const topic = parts.slice(1).join(" ").replace(/-/g, " ");
-        return { id: f, timestamp, topic };
-      })
-      .sort((a, b) => b.timestamp - a.timestamp);
-
-    res.json(folders);
-  });
-
-  // API: Get Results
-  app.get("/api/results", (req, res) => {
-    const id = req.query.id as string;
-    const historyDir = path.join(process.cwd(), "research_outputs");
-    
-    let targetDir = historyDir;
-    if (id) {
-      targetDir = path.join(historyDir, id);
-    } else if (fs.existsSync(historyDir)) {
-      const folders = fs.readdirSync(historyDir)
-        .filter(f => fs.lstatSync(path.join(historyDir, f)).isDirectory())
-        .sort((a, b) => parseInt(b.split("_")[0]) - parseInt(a.split("_")[0]));
-      if (folders.length > 0) {
-        targetDir = path.join(historyDir, folders[0]);
+    // Start research in background
+    const orchestrator = new ResearchOrchestrator(query, config as ResearchConfig, (update) => {
+      tasks.set(taskId, update);
+      const ws = clients.get(taskId);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(update));
       }
-    }
+    });
 
-    const reportPath = path.join(targetDir, "report.md");
-    const artifactsPath = path.join(targetDir, "artifacts.json");
+    orchestrator.run().catch((err) => {
+      console.error(`Task ${taskId} failed:`, err);
+      const failedState: ResearchState = {
+        ...tasks.get(taskId)!,
+        status: "failed",
+        error: err.message,
+      };
+      tasks.set(taskId, failedState);
+      const ws = clients.get(taskId);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(failedState));
+      }
+    });
 
-    if (fs.existsSync(reportPath)) {
-      const report = fs.readFileSync(reportPath, "utf-8");
-      const artifacts = fs.existsSync(artifactsPath) ? JSON.parse(fs.readFileSync(artifactsPath, "utf-8")) : null;
-      res.json({ report, artifacts });
-    } else {
-      res.status(404).json({ error: "No report found yet." });
-    }
+    res.json({ taskId });
+  });
+
+  app.get("/api/research/status/:taskId", (req, res) => {
+    const { taskId } = req.params;
+    const state = tasks.get(taskId);
+    if (!state) return res.status(404).json({ error: "Task not found" });
+    res.json(state);
   });
 
   // Vite middleware for development
@@ -116,8 +75,23 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://localhost:${PORT}`);
+  });
+
+  // WebSocket setup
+  const wss = new WebSocketServer({ server });
+  wss.on("connection", (ws, req) => {
+    const taskId = new URL(req.url!, `http://${req.headers.host}`).searchParams.get("taskId");
+    if (taskId) {
+      clients.set(taskId, ws);
+      const state = tasks.get(taskId);
+      if (state) ws.send(JSON.stringify(state));
+
+      ws.on("close", () => {
+        clients.delete(taskId);
+      });
+    }
   });
 }
 
