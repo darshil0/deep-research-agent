@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.4.0] - 2026-03-31
+
+### Added
+- **Advanced Search Filters**: Integrated comprehensive search filtering capabilities (date range, domain restriction, keyword exclusion) into both the backend (`Searcher`, `SearchAgent`) and the frontend UI (`App.tsx`).
+- **Tavily Time-Based Filtering**: Optimized the `Searcher` to utilize Tavily's native `days` parameter for more accurate time-restricted searches.
+- **Query Engineering for Filters**: Implemented automatic query modification to append advanced search operators (`site:`, `-`) based on user-defined filters for both Tavily and Google Search grounding.
+
+### Improved
+- **Prompt Engineering & Few-Shot Examples**: Significantly refined the prompts for the `Planner`, `Analyzer`, and `Synthesizer` agents, adding detailed instructions, guidelines, and few-shot examples to improve output quality, consistency, and report structure.
+- **UI Settings Panel**: Expanded the research settings panel with intuitive controls for all new search filters, including a date range dropdown and text inputs for domain and keyword restrictions.
+
 ## [1.3.0] - 2026-03-31
 
 ### Added
