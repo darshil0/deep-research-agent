@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { withRetry } from "../utils/retry.ts";
 
 export class Planner {
   private ai: GoogleGenAI;
@@ -8,7 +9,7 @@ export class Planner {
   }
 
   async createPlan(query: string): Promise<string[]> {
-    const response = await this.ai.models.generateContent({
+    const response = await withRetry(() => this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Break down the following research query into 3-5 specific, actionable research tasks or sub-queries that will help provide a comprehensive answer.
       Query: ${query}`,
@@ -22,7 +23,7 @@ export class Planner {
           },
         },
       },
-    });
+    }));
 
     try {
       const plan = JSON.parse(response.text || "[]");

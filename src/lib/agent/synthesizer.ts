@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Citation, ResearchReport } from "./types.ts";
+import { withRetry } from "../utils/retry.ts";
 
 export class Synthesizer {
   private ai: GoogleGenAI;
@@ -9,7 +10,7 @@ export class Synthesizer {
   }
 
   async synthesize(query: string, findings: string[], citations: Citation[]): Promise<Omit<ResearchReport, "metadata">> {
-    const response = await this.ai.models.generateContent({
+    const response = await withRetry(() => this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `You are a research synthesizer. Compile a comprehensive, high-quality research report based on the following findings and citations.
       Research Query: ${query}
@@ -47,7 +48,7 @@ export class Synthesizer {
           required: ["query", "summary", "content", "citations"],
         },
       },
-    });
+    }));
 
     try {
       const report = JSON.parse(response.text || "{}");

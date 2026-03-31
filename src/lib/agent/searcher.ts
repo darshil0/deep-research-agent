@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Citation } from "./types.ts";
 import { tavily } from "@tavily/core";
+import { withRetry } from "../utils/retry.ts";
 
 export class Searcher {
   private ai: GoogleGenAI;
@@ -18,11 +19,11 @@ export class Searcher {
     
     if (this.tvly) {
       try {
-        const response = await this.tvly.search(combinedQuery, {
+        const response = await withRetry(() => this.tvly.search(combinedQuery, {
           searchDepth: "advanced",
           maxResults: 5,
           includeAnswer: true,
-        });
+        })) as any;
 
         return response.results.map((r: any) => ({
           id: Math.random().toString(36).substring(7),
@@ -38,7 +39,7 @@ export class Searcher {
 
     // Fallback to Google Search Tool
     try {
-      const response = await this.ai.models.generateContent({
+      const response = await withRetry(() => this.ai.models.generateContent({
         model: "gemini-3-flash-preview",
         contents: `I am conducting deep research on: ${query}. 
         Based on these sub-queries: ${plan.join(", ")}
@@ -48,7 +49,7 @@ export class Searcher {
         config: {
           tools: [{ googleSearch: {} }],
         },
-      });
+      }));
 
       const citations: Citation[] = [];
       const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;

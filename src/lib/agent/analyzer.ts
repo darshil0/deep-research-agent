@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
+import { withRetry } from "../utils/retry.ts";
 
 export class Analyzer {
   private ai: GoogleGenAI;
@@ -8,7 +9,7 @@ export class Analyzer {
   }
 
   async analyze(content: string, query: string, sourceTitle: string): Promise<string> {
-    const response = await this.ai.models.generateContent({
+    const response = await withRetry(() => this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `You are a research analyst. Extract the most relevant information from the following source content to answer the research query.
       Research Query: ${query}
@@ -19,13 +20,13 @@ export class Analyzer {
       config: {
         responseMimeType: "text/plain",
       },
-    });
+    }));
 
     return response.text || "";
   }
 
   async checkCompleteness(query: string, findings: string[]): Promise<boolean> {
-    const response = await this.ai.models.generateContent({
+    const response = await withRetry(() => this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
       Research Query: ${query}
@@ -38,7 +39,7 @@ export class Analyzer {
           type: Type.BOOLEAN,
         },
       },
-    });
+    }));
 
     try {
       const isComplete = JSON.parse(response.text || "false");
