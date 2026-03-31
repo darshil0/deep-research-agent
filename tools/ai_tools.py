@@ -15,6 +15,7 @@ class AIService:
         self.model = Config.DEFAULT_MODEL
 
     async def generate_json(self, prompt: str, system_instruction: str = "") -> Dict[str, Any]:
+        logger.debug(f"AI Tool Call [generate_json]:\nSystem: {system_instruction}\nPrompt: {prompt[:500]}...")
         try:
             response = self.client.models.generate_content(
                 model=self.model,
@@ -24,12 +25,15 @@ class AIService:
                     response_mime_type="application/json"
                 )
             )
-            return json.loads(response.text)
+            result = json.loads(response.text)
+            logger.debug(f"AI Tool Response [generate_json]: {json.dumps(result)[:500]}...")
+            return result
         except Exception as e:
             logger.error(f"AI Generation error: {e}")
             return {}
 
     async def generate_text(self, prompt: str, system_instruction: str = "") -> str:
+        logger.debug(f"AI Tool Call [generate_text]:\nSystem: {system_instruction}\nPrompt: {prompt[:500]}...")
         try:
             response = self.client.models.generate_content(
                 model=self.model,
@@ -38,6 +42,7 @@ class AIService:
                     system_instruction=system_instruction
                 )
             )
+            logger.debug(f"AI Tool Response [generate_text]: {response.text[:500]}...")
             return response.text
         except Exception as e:
             logger.error(f"AI Generation error: {e}")

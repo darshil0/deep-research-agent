@@ -71,7 +71,9 @@ class ResearchOrchestrator:
         # Search
         all_results = []
         for query in queries:
+            logger.debug(f"Calling Search Tool [Tavily] for query: {query}")
             results = await self.search_client.search(query)
+            logger.debug(f"Search Tool Response [Tavily]: Found {len(results)} results for query: {query}")
             all_results.extend(results)
             
         # Deduplicate and filter sources
@@ -87,11 +89,17 @@ class ResearchOrchestrator:
         # Fetch and Extract
         fetch_limit = Config.MAX_FETCHES_PER_QUESTION
         for source in new_sources[:fetch_limit]:
+            logger.debug(f"Calling Fetch Tool [PageFetcher] for URL: {source.url}")
             content = await self.fetcher.fetch(source.url)
             if content:
+                logger.debug(f"Fetch Tool Response [PageFetcher]: Successfully fetched {len(content)} characters from {source.url}")
                 source.content = content
+                logger.debug(f"Calling Extraction Tool [EvidenceExtractor] for URL: {source.url}")
                 evidence = await self.extractor.extract(content, sq.question, source.url)
+                logger.debug(f"Extraction Tool Response [EvidenceExtractor]: Found {len(evidence)} evidence points from {source.url}")
                 self.artifacts.evidence.extend(evidence)
+            else:
+                logger.warning(f"Fetch Tool Response [PageFetcher]: Failed to fetch content from {source.url}")
                 
         sq.status = "analyzed"
         logger.info(f"Finished analyzing: {sq.question}")
