@@ -2,6 +2,15 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.3.0] - 2026-03-31
+
+### Added
+- **Robust API Resilience**: Implemented a generic `withRetry` utility with exponential backoff for all Gemini, Tavily, and web fetching operations, significantly reducing failures due to rate limits or transient network issues.
+- **Decomposed Agent Architecture**: Refactored the monolithic research logic into specialized modules (`Planner`, `Searcher`, `Fetcher`, `Analyzer`, `Synthesizer`) for better modularity and maintainability.
+- **Role-Based Agent Orchestration**: Introduced a `Router` and specialized agents (`SearchAgent`, `AnalysisAgent`, `SynthesisAgent`) to distinctly separate concerns and simplify the high-level research flow.
+- **Intelligent Content Caching**: Implemented a file-based `ContentCache` with configurable TTL to store and reuse fetched web content, reducing redundant network requests and accelerating the research process.
+- **Phase-Specific Orchestration**: Refactored the `ResearchOrchestrator` to use distinct, well-defined phases (`planPhase`, `researchPhase`, `synthesisPhase`), improving the clarity and robustness of the research lifecycle.
+
 ## [1.2.0] - 2026-03-31
 
 ### Added
