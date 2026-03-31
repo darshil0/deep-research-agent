@@ -12,11 +12,12 @@ logging.basicConfig(
 )
 
 async def main():
-    if len(sys.argv) < 2:
-        print("Usage: python main.py \"Research Topic\"")
+    print("--- Deep Research Agent ---")
+    topic = input("Enter your research topic or question: ").strip()
+    
+    if not topic:
+        print("Error: Research topic cannot be empty.")
         return
-
-    topic = sys.argv[1]
     
     try:
         Config.validate()

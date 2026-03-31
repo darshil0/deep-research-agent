@@ -24,9 +24,9 @@ An autonomous, iterative research agent built in Python 3.
 
 ## Usage
 
-Run the agent with a research topic:
+Run the agent and follow the prompt to enter your research topic:
 ```bash
-python main.py "The impact of solid-state batteries on the EV market by 2030"
+python main.py
 ```
 
 ## Architecture
