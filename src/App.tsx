@@ -60,9 +60,25 @@ export default function App() {
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth"
+      });
     }
   }, [state?.steps]);
+
+  const clearCache = async () => {
+    try {
+      const response = await fetch("/api/research/cache/clear", { method: "POST" });
+      if (response.ok) {
+        toast.success("Cache cleared successfully.");
+      } else {
+        throw new Error("Failed to clear cache.");
+      }
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
 
   const handleStartResearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,12 +120,24 @@ export default function App() {
     toast.success("Report downloaded successfully.");
   };
 
+  const updateFilter = (key: keyof NonNullable<ResearchConfig["filters"]>, value: any) => {
+    setConfig(prev => ({
+      ...prev,
+      filters: {
+        dateRange: "all",
+        excludeKeywords: [],
+        ...prev.filters,
+        [key]: value
+      }
+    }));
+  };
+
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
+    <div id="app-root" className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
       <Toaster position="top-center" theme="dark" />
       
       {/* Header */}
-      <header className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
+      <header id="main-header" className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
@@ -120,13 +148,14 @@ export default function App() {
           
           <div className="flex items-center gap-4">
             <button 
+              id="settings-toggle"
               onClick={() => setShowSettings(!showSettings)}
               className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white/60 hover:text-white"
             >
               <Settings className="w-5 h-5" />
             </button>
             <div className="h-4 w-[1px] bg-white/10" />
-            <div className="text-xs font-mono text-white/40 uppercase tracking-widest">v1.0.0</div>
+            <div className="text-xs font-mono text-white/40 uppercase tracking-widest">v1.4.0</div>
           </div>
         </div>
       </header>
@@ -149,7 +178,7 @@ export default function App() {
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="e.g., The impact of quantum computing on modern cryptography..."
                   disabled={isResearching}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:border-white/20"
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-5 pr-16 text-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed group-hover:border-white/20 placeholder:text-white/20"
                 />
                 <button
                   type="submit"
@@ -203,21 +232,26 @@ export default function App() {
                   </div>
 
                   <div className="space-y-4 pt-4 border-t border-white/10">
-                    <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest">Search Filters</h4>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-3 bg-blue-500 rounded-full" />
+                        <h4 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Search Filters</h4>
+                      </div>
+                      <button 
+                        onClick={clearCache}
+                        className="text-[10px] font-mono text-white/20 hover:text-rose-400 transition-colors uppercase tracking-widest"
+                      >
+                        Clear Cache
+                      </button>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Date Range</label>
+                        <label htmlFor="date-range-select" className="text-xs text-white/40 uppercase tracking-wider font-semibold">Date Range</label>
                         <select 
+                          id="date-range-select"
                           value={config.filters?.dateRange || "all"}
-                          onChange={(e) => setConfig({ 
-                            ...config, 
-                            filters: { 
-                              excludeKeywords: [],
-                              ...config.filters,
-                              dateRange: e.target.value as any 
-                            } 
-                          })}
+                          onChange={(e) => updateFilter("dateRange", e.target.value)}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm"
                         >
                           <option value="all">All Time</option>
@@ -228,39 +262,26 @@ export default function App() {
                         </select>
                       </div>
                       <div className="space-y-2">
-                        <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Domain Restriction</label>
+                        <label htmlFor="domain-restriction-input" className="text-xs text-white/40 uppercase tracking-wider font-semibold">Domain Restriction</label>
                         <input 
+                          id="domain-restriction-input"
                           type="text" 
                           placeholder="e.g., wikipedia.org"
                           value={config.filters?.domainRestriction || ""}
-                          onChange={(e) => setConfig({ 
-                            ...config, 
-                            filters: { 
-                              dateRange: "all",
-                              excludeKeywords: [],
-                              ...config.filters,
-                              domainRestriction: e.target.value 
-                            } 
-                          })}
+                          onChange={(e) => updateFilter("domainRestriction", e.target.value)}
                           className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm placeholder:text-white/20"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Exclude Keywords</label>
+                      <label htmlFor="exclude-keywords-input" className="text-xs text-white/40 uppercase tracking-wider font-semibold">Exclude Keywords</label>
                       <input 
+                        id="exclude-keywords-input"
                         type="text" 
                         placeholder="e.g., forum, reddit, blog"
                         value={config.filters?.excludeKeywords?.join(", ") || ""}
-                        onChange={(e) => setConfig({ 
-                          ...config, 
-                          filters: { 
-                            dateRange: "all",
-                            ...config.filters,
-                            excludeKeywords: e.target.value.split(",").map(k => k.trim()).filter(k => k !== "") 
-                          } 
-                        })}
+                        onChange={(e) => updateFilter("excludeKeywords", e.target.value.split(",").map(k => k.trim()).filter(k => k !== ""))}
                         className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm placeholder:text-white/20"
                       />
                     </div>
@@ -278,8 +299,11 @@ export default function App() {
                   className="space-y-4"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-white/40 uppercase tracking-widest">Research Progress</h3>
-                    <div className="flex items-center gap-2 text-xs text-blue-400 font-mono">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1 h-3 bg-blue-500 rounded-full animate-pulse" />
+                      <h3 className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">Research Progress</h3>
+                    </div>
+                    <div className="flex items-center gap-2 text-[10px] text-blue-400 font-mono bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
                       <Clock className="w-3 h-3" />
                       {state.status.toUpperCase()}
                     </div>
@@ -301,16 +325,16 @@ export default function App() {
                       >
                         <div className="flex items-start gap-3">
                           <div className="mt-1">
-                            {step.status === "running" && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
-                            {step.status === "completed" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
-                            {step.status === "failed" && <XCircle className="w-4 h-4 text-rose-500" />}
+                            {step.status === "running" && <Loader2 className="w-3.5 h-3.5 text-blue-500 animate-spin" />}
+                            {step.status === "completed" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />}
+                            {step.status === "failed" && <XCircle className="w-3.5 h-3.5 text-rose-500" />}
                           </div>
                           <div className="flex-1 space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-mono text-white/40">{step.type.toUpperCase()}</span>
-                              <span className="text-[10px] text-white/20">{format(new Date(step.timestamp), "HH:mm:ss")}</span>
+                              <span className="text-[10px] font-mono text-white/30 tracking-wider">{step.type.toUpperCase()}</span>
+                              <span className="text-[9px] text-white/20 font-mono">{format(new Date(step.timestamp), "HH:mm:ss")}</span>
                             </div>
-                            <p className={cn("text-sm", step.status === "running" ? "text-white" : "text-white/70")}>
+                            <p className={cn("text-xs leading-relaxed", step.status === "running" ? "text-white font-medium" : "text-white/60")}>
                               {step.message}
                             </p>
                           </div>
@@ -324,7 +348,7 @@ export default function App() {
           </div>
 
           {/* Right Column: Results & Report */}
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 relative">
             <AnimatePresence mode="wait">
               {!state?.report ? (
                 <motion.div 
@@ -332,12 +356,18 @@ export default function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="h-full min-h-[600px] flex flex-col items-center justify-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] p-12 text-center space-y-6"
+                  className="h-full min-h-[600px] flex flex-col items-center justify-center border border-dashed border-white/10 rounded-3xl bg-white/[0.02] p-12 text-center space-y-6 relative overflow-hidden"
                 >
-                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center">
+                  {/* Atmospheric background elements */}
+                  <div className="absolute inset-0 pointer-events-none">
+                    <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-600/5 rounded-full blur-[100px]" />
+                    <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-indigo-600/5 rounded-full blur-[100px]" />
+                  </div>
+
+                  <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center relative z-10">
                     <FileText className="w-10 h-10 text-white/20" />
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative z-10">
                     <h3 className="text-xl font-semibold">No Report Yet</h3>
                     <p className="text-white/40 max-w-sm mx-auto">Start a research task to generate a comprehensive report with citations.</p>
                   </div>
@@ -345,9 +375,10 @@ export default function App() {
               ) : (
                 <motion.div 
                   key="report"
+                  id="research-report"
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl"
+                  className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative"
                 >
                   <div className="p-8 border-b border-white/10 bg-white/[0.02]">
                     <div className="flex items-center justify-between mb-6">
@@ -356,6 +387,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-4">
                         <button 
+                          id="download-report-btn"
                           onClick={downloadReport}
                           className="flex items-center gap-2 px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs transition-all"
                         >
@@ -374,14 +406,14 @@ export default function App() {
                         </div>
                       </div>
                     </div>
-                    <h2 className="text-4xl font-bold tracking-tight mb-4 leading-tight">{state.report.query}</h2>
-                    <div className="p-4 bg-blue-500/5 border border-blue-500/10 rounded-xl">
-                      <p className="text-white/80 leading-relaxed italic">"{state.report.summary}"</p>
+                    <h2 className="text-4xl font-bold tracking-tight mb-4 leading-tight font-serif italic text-white/90">{state.report.query}</h2>
+                    <div className="p-6 bg-blue-500/5 border border-blue-500/10 rounded-2xl">
+                      <p className="text-white/80 leading-relaxed italic text-lg font-light">"{state.report.summary}"</p>
                     </div>
                   </div>
 
                   <div className="p-8 space-y-12">
-                    <article className="prose prose-invert prose-blue max-w-none prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-white/80">
+                    <article className="prose prose-invert prose-blue max-w-none prose-headings:font-serif prose-headings:italic prose-headings:tracking-tight prose-p:leading-relaxed prose-p:text-white/80 prose-p:text-lg prose-p:font-light">
                       <ReactMarkdown>{state.report.content}</ReactMarkdown>
                     </article>
 

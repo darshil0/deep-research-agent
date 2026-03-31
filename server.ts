@@ -60,6 +60,17 @@ async function startServer() {
     res.json(state);
   });
 
+  app.post("/api/research/cache/clear", async (req, res) => {
+    try {
+      const { ContentCache } = await import("./src/lib/utils/cache.ts");
+      const cache = new ContentCache();
+      await cache.clear();
+      res.json({ message: "Cache cleared" });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
