@@ -1,0 +1,33 @@
+{
+  "topic": "The Future of Solid-State Batteries (2030)",
+  "logs": [
+    { "id": "l1", "message": "INITIALIZING_RESEARCH: THE FUTURE OF SOLID-STATE BATTERIES (2030)", "timestamp": "14:20:01" },
+    { "id": "l2", "message": "PLANNING_INVESTIGATION", "timestamp": "14:20:05" },
+    { "id": "l3", "message": "EXECUTING_WEB_SEARCH", "timestamp": "14:20:12" },
+    { "id": "l4", "message": "EXTRACTING_EVIDENCE_CLAIMS", "timestamp": "14:20:45" },
+    { "id": "l5", "message": "SYNTHESIZING_FINDINGS", "timestamp": "14:21:10" },
+    { "id": "l6", "message": "RESEARCH_COMPLETE: ARTIFACTS_GENERATED", "timestamp": "14:21:30" }
+  ],
+  "sources": [
+    { "url": "https://example.com/toyota-ssb", "title": "Toyota Solid-State Roadmap" },
+    { "url": "https://example.com/quantumscape-data", "title": "QuantumScape Performance Data" },
+    { "url": "https://example.com/bnef-2030", "title": "BloombergNEF Battery Outlook" }
+  ],
+  "evidence": [
+    { 
+      "claim": "2x energy density vs Li-ion", 
+      "source_url": "https://example.com/toyota-ssb",
+      "context": "Toyota's 2023 roadmap highlights that their Gen 1 solid-state cells will achieve double the volumetric energy density of their current liquid-electrolyte batteries.",
+      "confidence": 0.95
+    },
+    { 
+      "claim": "Commercial viability by 2027-2028", 
+      "source_url": "https://example.com/quantumscape-data",
+      "context": "QuantumScape's latest testing data from their A0 prototype cells suggests a production ramp-up starting in late 2026, with commercial vehicle integration expected by 2027.",
+      "confidence": 0.88
+    }
+  ],
+  "report": {
+    "confidence_score": 0.92
+  }
+}

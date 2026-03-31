@@ -115,23 +115,35 @@ class ReportSynthesizer:
         self.ai = ai_service
 
     async def synthesize(self, topic: str, evidence: List[Evidence], sources: List[Source]) -> ResearchReport:
-        system = "You are a professional research analyst. Synthesize a comprehensive report based on the provided evidence."
+        system = "You are a professional research analyst. Synthesize a comprehensive report based on the provided evidence and sources."
         
-        evidence_text = "\n".join([f"- {e.claim} (Source: {e.source_url})" for e in evidence])
-        source_map = {s.url: s.title for s in sources}
+        # Create a mapping of URL to Title for the LLM
+        source_list_text = "\n".join([f"- {s.title}: {s.url}" for s in sources])
+        evidence_text = "\n".join([f"- {e.claim} (Source URL: {e.source_url})" for e in evidence])
         
         prompt = f"""
         Topic: {topic}
         
-        Evidence:
+        Available Sources (Title: URL):
+        {source_list_text}
+        
+        Evidence Points:
         {evidence_text}
         
         Instructions:
-        1. Write an executive summary.
-        2. Create detailed sections with citations like [Title](URL).
-        3. List conclusions and limitations.
-        4. Identify uncertainties.
-        5. Return a JSON object matching the ResearchReport model.
+        1. Write a high-quality executive summary.
+        2. Create detailed sections. 
+        3. **MANDATORY**: For every factual claim, include an inline citation formatted EXACTLY as [Source Title](Source URL). 
+           Use the 'Available Sources' list above to match URLs to their correct Titles.
+        4. List major conclusions and limitations.
+        5. Identify areas of uncertainty.
+        6. Return a JSON object with:
+           - 'executive_summary' (string)
+           - 'sections' (list of objects with 'title' and 'content')
+           - 'conclusions' (list of strings)
+           - 'limitations' (list of strings)
+           - 'uncertainties' (list of strings)
+           - 'confidence_score' (float between 0 and 1)
         """
         
         data = await self.ai.generate_json(prompt, system)

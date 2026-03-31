@@ -1,6 +1,12 @@
-import { useState, useEffect } from 'react';
-import { Sun, Moon, Search, Zap, FileText, CheckCircle, AlertCircle, Terminal, Info } from 'lucide-react';
+import { useState, useEffect, FormEvent } from 'react';
+import { Sun, Moon, Search, Zap, FileText, CheckCircle, AlertCircle, Terminal, Info, History, Clock, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+interface HistoryItem {
+  id: string;
+  timestamp: number;
+  topic: string;
+}
 
 export default function App() {
   const [isDark, setIsDark] = useState(() => {
@@ -14,6 +20,12 @@ export default function App() {
   const [topic, setTopic] = useState('');
   const [isResearching, setIsResearching] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [report, setReport] = useState<string | null>(null);
+  const [artifacts, setArtifacts] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [logs, setLogs] = useState<{ id: string; message: string; timestamp: string }[]>([]);
 
   useEffect(() => {
     if (isDark) {
@@ -25,26 +37,141 @@ export default function App() {
     }
   }, [isDark]);
 
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
+  const addLog = (message: string) => {
+    const time = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    setLogs(prev => [{ id: Math.random().toString(36).substr(2, 9), message, timestamp: time }, ...prev].slice(0, 10));
+  };
+
+  const fetchHistory = async () => {
+    try {
+      const response = await fetch('/api/history');
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      }
+    } catch (e) {
+      console.error("Failed to fetch history", e);
+    }
+  };
+
   const toggleTheme = () => setIsDark(!isDark);
 
-  const handleStartResearch = (e: React.FormEvent) => {
+  const loadReport = async (id: string) => {
+    setIsResearching(true);
+    setProgress(0);
+    setError(null);
+    setReport(null);
+    setArtifacts(null);
+    setLogs([]);
+    addLog(`LOADING_ARCHIVE: ${id}`);
+    
+    try {
+      const response = await fetch(`/api/results?id=${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setReport(data.report);
+        setArtifacts(data.artifacts);
+        setProgress(100);
+        addLog("ARCHIVE_LOAD_COMPLETE");
+        if (data.artifacts?.logs) {
+          setLogs(data.artifacts.logs);
+        }
+      } else {
+        throw new Error("Report not found");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      addLog("ERROR: FAILED_TO_LOAD_ARCHIVE");
+    } finally {
+      setIsResearching(false);
+    }
+  };
+
+  const handleStartResearch = async (e: FormEvent) => {
     e.preventDefault();
     if (!topic.trim()) return;
     
     setIsResearching(true);
     setProgress(0);
+    setError(null);
+    setReport(null);
+    setArtifacts(null);
+    setLogs([]);
     
-    // Simulate research progress
-    const interval = setInterval(() => {
-      setProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setIsResearching(false);
-          return 100;
-        }
-        return prev + 2;
+    addLog(`INITIALIZING_RESEARCH: ${topic.toUpperCase()}`);
+    
+    try {
+      const response = await fetch('/api/research', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic })
       });
-    }, 100);
+
+      if (!response.ok) throw new Error('Failed to start research');
+      const { id } = await response.json();
+      addLog("AGENT_SPAWNED: RESEARCH_ORCHESTRATOR_v1");
+
+      // Simulate progress while the "backend" works
+      const stages = [
+        "PLANNING_INVESTIGATION",
+        "GENERATING_SEARCH_QUERIES",
+        "EXECUTING_WEB_SEARCH",
+        "FETCHING_SOURCE_CONTENT",
+        "EXTRACTING_EVIDENCE_CLAIMS",
+        "SYNTHESIZING_FINDINGS",
+        "VERIFYING_CITATIONS",
+        "FINALIZING_REPORT"
+      ];
+
+      let stageIdx = 0;
+      const interval = setInterval(async () => {
+        setProgress(prev => {
+          if (prev >= 95) {
+            clearInterval(interval);
+            return 95;
+          }
+          
+          if (prev % 12 === 0 && stageIdx < stages.length) {
+            addLog(stages[stageIdx]);
+            stageIdx++;
+          }
+          
+          return prev + 2;
+        });
+      }, 100);
+
+      // Poll for results after some time
+      setTimeout(async () => {
+        try {
+          const resResponse = await fetch(`/api/results?id=${id}`);
+          if (resResponse.ok) {
+            const data = await resResponse.json();
+            setReport(data.report);
+            setArtifacts(data.artifacts);
+            setProgress(100);
+            setIsResearching(false);
+            addLog("RESEARCH_COMPLETE: ARTIFACTS_GENERATED");
+            fetchHistory(); // Refresh history
+          } else {
+            setProgress(100);
+            setIsResearching(false);
+            addLog("ERROR: RESULTS_NOT_FOUND");
+          }
+        } catch (e) {
+          setIsResearching(false);
+          addLog("ERROR: CONNECTION_LOST");
+        }
+      }, 5000);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setIsResearching(false);
+      addLog("ERROR: INITIALIZATION_FAILED");
+    }
   };
 
   return (
@@ -58,134 +185,226 @@ export default function App() {
           <h1 className="font-mono font-bold tracking-tighter text-xl">DEEP_RESEARCH_v1.0</h1>
         </div>
         
-        <button 
-          onClick={toggleTheme}
-          className="p-2 rounded-full hover:bg-[var(--line)] transition-colors"
-          aria-label="Toggle theme"
-        >
-          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setShowHistory(!showHistory)}
+            className={`p-2 rounded-full transition-colors ${showHistory ? 'bg-[var(--ink)] text-[var(--bg)]' : 'hover:bg-[var(--line)]'}`}
+            aria-label="Toggle history"
+          >
+            <History className="w-5 h-5" />
+          </button>
+          <button 
+            onClick={toggleTheme}
+            className="p-2 rounded-full hover:bg-[var(--line)] transition-colors"
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+        </div>
       </header>
 
-      <main className="flex-1 max-w-5xl mx-auto w-full p-6 space-y-8">
-        {/* Input Section */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-[var(--accent)]">
-            <Terminal className="w-4 h-4" />
-            <span className="font-mono text-xs uppercase tracking-widest">Initialization</span>
-          </div>
-          
-          <form onSubmit={handleStartResearch} className="relative">
-            <input 
-              type="text"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              placeholder="Enter research topic or question..."
-              className="w-full bg-[var(--bg)] border-2 border-[var(--ink)] p-4 pr-16 font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
-              disabled={isResearching}
-            />
-            <button 
-              type="submit"
-              disabled={isResearching || !topic.trim()}
-              className="absolute right-2 top-2 bottom-2 px-4 bg-[var(--ink)] text-[var(--bg)] hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
-            >
-              {isResearching ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><Search className="w-4 h-4" /></motion.div> : <Search className="w-4 h-4" />}
-              <span className="hidden sm:inline font-mono text-xs font-bold uppercase">Execute</span>
-            </button>
-          </form>
-        </section>
-
-        {/* Progress Section */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* History Sidebar */}
         <AnimatePresence>
-          {isResearching && (
-            <motion.section 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="space-y-2"
+          {showHistory && (
+            <motion.aside 
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              className="w-72 border-r border-[var(--line)] bg-[var(--bg)] overflow-y-auto flex flex-col"
             >
-              <div className="flex justify-between font-mono text-[10px] uppercase opacity-60">
-                <span>Analyzing subquestions...</span>
-                <span>{progress}%</span>
+              <div className="p-4 border-b border-[var(--line)] flex items-center justify-between">
+                <span className="col-header">Research History</span>
+                <span className="text-[10px] font-mono opacity-50">{history.length} ITEMS</span>
               </div>
-              <div className="h-1 bg-[var(--line)] w-full overflow-hidden">
-                <motion.div 
-                  className="h-full bg-[var(--accent)]"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                />
+              <div className="flex-1 divide-y divide-[var(--line)]">
+                {history.length === 0 ? (
+                  <div className="p-8 text-center opacity-30 font-mono text-[10px]">NO_RECORDS_FOUND</div>
+                ) : (
+                  history.map((item) => (
+                    <button 
+                      key={item.id}
+                      onClick={() => loadReport(item.id)}
+                      className="w-full p-4 text-left hover:bg-[var(--ink)] hover:text-[var(--bg)] transition-all group"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[9px] font-mono opacity-50 group-hover:opacity-100">
+                          {new Date(item.timestamp).toLocaleDateString()}
+                        </span>
+                        <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                      <div className="text-xs font-mono font-bold truncate uppercase tracking-tight">
+                        {item.topic}
+                      </div>
+                    </button>
+                  ))
+                )}
               </div>
-            </motion.section>
+            </motion.aside>
           )}
         </AnimatePresence>
 
-        {/* Dashboard Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Status Card */}
-          <div className="border border-[var(--line)] p-4 space-y-4">
-            <div className="col-header">System Status</div>
-            <div className="flex items-center justify-between">
-              <span className="data-value text-xs">Engine</span>
-              <span className="text-[10px] font-bold uppercase text-green-500 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Online
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="data-value text-xs">Search API</span>
-              <span className="text-[10px] font-bold uppercase text-green-500 flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Ready
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="data-value text-xs">Extraction</span>
-              <span className="text-[10px] font-bold uppercase opacity-50">Idle</span>
-            </div>
-          </div>
-
-          {/* Metrics Card */}
-          <div className="border border-[var(--line)] p-4 space-y-4">
-            <div className="col-header">Research Metrics</div>
-            <div className="flex items-center justify-between">
-              <span className="data-value text-xs">Sources Found</span>
-              <span className="data-value text-lg">0</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="data-value text-xs">Evidence Points</span>
-              <span className="data-value text-lg">0</span>
-            </div>
-          </div>
-
-          {/* Info Card */}
-          <div className="border border-[var(--line)] p-4 space-y-4 bg-[var(--ink)] text-[var(--bg)]">
-            <div className="col-header opacity-50 text-[var(--bg)]">Instructions</div>
-            <p className="text-[10px] leading-relaxed opacity-80">
-              Enter a complex topic to begin an iterative deep research process. 
-              The agent will decompose the request, search the web, and synthesize 
-              a comprehensive report with citations.
-            </p>
+        <main className="flex-1 overflow-y-auto p-6 space-y-8">
+          {/* Input Section */}
+          <section className="space-y-4">
             <div className="flex items-center gap-2 text-[var(--accent)]">
-              <Info className="w-3 h-3" />
-              <span className="text-[9px] font-bold uppercase tracking-tighter">v1.0.4 - Stable</span>
+              <Terminal className="w-4 h-4" />
+              <span className="font-mono text-xs uppercase tracking-widest">Initialization</span>
+            </div>
+            
+            <form onSubmit={handleStartResearch} className="relative">
+              <input 
+                type="text"
+                value={topic}
+                onChange={(e) => setTopic(e.target.value)}
+                placeholder="Enter research topic or question..."
+                className="w-full bg-[var(--bg)] border-2 border-[var(--ink)] p-4 pr-16 font-mono focus:outline-none focus:ring-2 focus:ring-[var(--accent)] transition-all"
+                disabled={isResearching}
+              />
+              <button 
+                type="submit"
+                disabled={isResearching || !topic.trim()}
+                className="absolute right-2 top-2 bottom-2 px-4 bg-[var(--ink)] text-[var(--bg)] hover:opacity-90 disabled:opacity-50 transition-all flex items-center gap-2"
+              >
+                {isResearching ? <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><Search className="w-4 h-4" /></motion.div> : <Search className="w-4 h-4" />}
+                <span className="hidden sm:inline font-mono text-xs font-bold uppercase">Execute</span>
+              </button>
+            </form>
+          </section>
+
+          {/* Progress Section */}
+          <AnimatePresence>
+            {isResearching && (
+              <motion.section 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-2"
+              >
+                <div className="flex justify-between font-mono text-[10px] uppercase opacity-60">
+                  <span>Analyzing subquestions...</span>
+                  <span>{progress}%</span>
+                </div>
+                <div className="h-1 bg-[var(--line)] w-full overflow-hidden">
+                  <motion.div 
+                    className="h-full bg-[var(--accent)]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progress}%` }}
+                  />
+                </div>
+              </motion.section>
+            )}
+          </AnimatePresence>
+
+          {/* Dashboard Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Status Card */}
+            <div className="border border-[var(--line)] p-4 space-y-4">
+              <div className="col-header">System Status</div>
+              <div className="flex items-center justify-between">
+                <span className="data-value text-xs">Engine</span>
+                <span className="text-[10px] font-bold uppercase text-green-500 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Online
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="data-value text-xs">Search API</span>
+                <span className="text-[10px] font-bold uppercase text-green-500 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3" /> Ready
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="data-value text-xs">Extraction</span>
+                <span className={`text-[10px] font-bold uppercase ${isResearching ? 'text-[var(--accent)] animate-pulse' : 'opacity-50'}`}>
+                  {isResearching ? 'Active' : 'Idle'}
+                </span>
+              </div>
+            </div>
+
+            {/* Metrics Card */}
+            <div className="border border-[var(--line)] p-4 space-y-4">
+              <div className="col-header">Research Metrics</div>
+              <div className="flex items-center justify-between">
+                <span className="data-value text-xs">Sources Found</span>
+                <span className="data-value text-lg">{artifacts?.sources?.length || 0}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="data-value text-xs">Evidence Points</span>
+                <span className="data-value text-lg">{artifacts?.evidence?.length || 0}</span>
+              </div>
+            </div>
+
+            {/* Info Card */}
+            <div className="border border-[var(--line)] p-4 space-y-4 bg-[var(--ink)] text-[var(--bg)]">
+              <div className="col-header opacity-50 text-[var(--bg)]">Instructions</div>
+              <p className="text-[10px] leading-relaxed opacity-80">
+                Enter a complex topic to begin an iterative deep research process. 
+                The agent will decompose the request, search the web, and synthesize 
+                a comprehensive report with citations.
+              </p>
+              <div className="flex items-center gap-2 text-[var(--accent)]">
+                <Info className="w-3 h-3" />
+                <span className="text-[9px] font-bold uppercase tracking-tighter">v1.0.4 - Stable</span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Recent Activity / Results Placeholder */}
-        <section className="space-y-4">
-          <div className="col-header">Recent Activity Log</div>
-          <div className="border border-[var(--line)] divide-y divide-[var(--line)]">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="data-row p-3 flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-4">
-                  <span className="opacity-30 font-mono">0{i}</span>
-                  <span className="font-mono">SYSTEM_IDLE</span>
+          {/* Results Section */}
+          {report && (
+            <motion.section 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="border border-[var(--line)] p-8 bg-[var(--bg)] space-y-6"
+            >
+              <div className="flex items-center justify-between border-b border-[var(--line)] pb-4">
+                <div className="col-header">Final Research Report</div>
+                <div className="flex gap-4">
+                  <div className="text-[10px] font-mono">CONFIDENCE: <span className="text-[var(--accent)]">{artifacts?.report?.confidence_score * 100}%</span></div>
+                  <div className="text-[10px] font-mono">SOURCES: {artifacts?.sources?.length}</div>
                 </div>
-                <span className="opacity-40 font-mono">--:--:--</span>
               </div>
-            ))}
-          </div>
-        </section>
-      </main>
+              <div className="prose prose-sm dark:prose-invert max-w-none font-sans leading-relaxed whitespace-pre-wrap">
+                {report}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Recent Activity / Results Placeholder */}
+          <section className="space-y-4">
+            <div className="col-header">Recent Activity Log</div>
+            <div className="border border-[var(--line)] divide-y divide-[var(--line)]">
+              {logs.length === 0 ? (
+                [1, 2, 3].map((i) => (
+                  <div key={i} className="data-row p-3 flex items-center justify-between text-[11px]">
+                    <div className="flex items-center gap-4">
+                      <span className="opacity-30 font-mono">0{i}</span>
+                      <span className="font-mono">SYSTEM_IDLE</span>
+                    </div>
+                    <span className="opacity-40 font-mono">--:--:--</span>
+                  </div>
+                ))
+              ) : (
+                logs.map((log, index) => (
+                  <motion.div 
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    key={log.id} 
+                    className="data-row p-3 flex items-center justify-between text-[11px]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="opacity-30 font-mono">{(logs.length - index).toString().padStart(2, '0')}</span>
+                      <span className={`font-mono ${log.message.startsWith('ERROR') ? 'text-red-500' : ''}`}>
+                        {log.message}
+                      </span>
+                    </div>
+                    <span className="opacity-40 font-mono">{log.timestamp}</span>
+                  </motion.div>
+                ))
+              )}
+            </div>
+          </section>
+        </main>
+      </div>
 
       {/* Footer */}
       <footer className="h-12 border-t border-[var(--line)] flex items-center justify-between px-6 text-[9px] font-mono opacity-50">
