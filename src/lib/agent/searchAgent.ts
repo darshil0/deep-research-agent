@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Citation } from "./types.ts";
+import { Citation, SearchFilters } from "./types.ts";
 import { Searcher } from "./searcher.ts";
 import { Fetcher } from "./fetcher.ts";
 
@@ -12,9 +12,9 @@ export class SearchAgent {
     this.fetcher = new Fetcher();
   }
 
-  async execute(query: string, plan: string[], previousFindings: string[]): Promise<{ sources: Citation[]; contents: { source: Citation; content: string }[] }> {
+  async execute(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<{ sources: Citation[]; contents: { source: Citation; content: string }[] }> {
     // 1. Search for relevant sources
-    const searchResults = await this.searcher.search(query, plan, previousFindings);
+    const searchResults = await this.searcher.search(query, plan, previousFindings, filters);
     
     // 2. Fetch content for top sources
     const topSources = searchResults.slice(0, 3);

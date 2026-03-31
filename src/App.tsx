@@ -23,6 +23,10 @@ export default function App() {
     maxTimeSeconds: 300,
     budgetTokens: 100000,
     useFullPageFetch: true,
+    filters: {
+      dateRange: "all",
+      excludeKeywords: [],
+    }
   });
 
   const wsRef = useRef<WebSocket | null>(null);
@@ -196,6 +200,70 @@ export default function App() {
                       className="w-4 h-4 rounded border-white/10 bg-black/40 text-blue-600 focus:ring-blue-500"
                     />
                     <label className="text-sm text-white/60">Use full-page fetches for deep analysis</label>
+                  </div>
+
+                  <div className="space-y-4 pt-4 border-t border-white/10">
+                    <h4 className="text-xs font-bold text-white/40 uppercase tracking-widest">Search Filters</h4>
+                    
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Date Range</label>
+                        <select 
+                          value={config.filters?.dateRange || "all"}
+                          onChange={(e) => setConfig({ 
+                            ...config, 
+                            filters: { 
+                              excludeKeywords: [],
+                              ...config.filters,
+                              dateRange: e.target.value as any 
+                            } 
+                          })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm"
+                        >
+                          <option value="all">All Time</option>
+                          <option value="day">Past 24 Hours</option>
+                          <option value="week">Past Week</option>
+                          <option value="month">Past Month</option>
+                          <option value="year">Past Year</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Domain Restriction</label>
+                        <input 
+                          type="text" 
+                          placeholder="e.g., wikipedia.org"
+                          value={config.filters?.domainRestriction || ""}
+                          onChange={(e) => setConfig({ 
+                            ...config, 
+                            filters: { 
+                              dateRange: "all",
+                              excludeKeywords: [],
+                              ...config.filters,
+                              domainRestriction: e.target.value 
+                            } 
+                          })}
+                          className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm placeholder:text-white/20"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Exclude Keywords</label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g., forum, reddit, blog"
+                        value={config.filters?.excludeKeywords?.join(", ") || ""}
+                        onChange={(e) => setConfig({ 
+                          ...config, 
+                          filters: { 
+                            dateRange: "all",
+                            ...config.filters,
+                            excludeKeywords: e.target.value.split(",").map(k => k.trim()).filter(k => k !== "") 
+                          } 
+                        })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm placeholder:text-white/20"
+                      />
+                    </div>
                   </div>
                 </motion.div>
               )}

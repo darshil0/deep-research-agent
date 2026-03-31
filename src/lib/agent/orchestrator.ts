@@ -117,7 +117,7 @@ export class ResearchOrchestrator {
       
       // Context Pruning: Only pass the most recent findings to the searcher
       const recentFindings = allFindings.slice(-5);
-      const { sources, contents } = await this.router.searchAndFetch(this.query, plan, recentFindings);
+      const { sources, contents } = await this.router.searchAndFetch(this.query, plan, recentFindings, this.config.filters);
       this.completeStep(searchId, "completed", `Found ${sources.length} relevant sources.`, sources);
 
       // Analysis

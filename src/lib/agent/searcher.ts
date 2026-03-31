@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { Citation } from "./types.ts";
+import { Citation, SearchFilters } from "./types.ts";
 import { tavily } from "@tavily/core";
 import { withRetry } from "../utils/retry.ts";
 
@@ -14,16 +14,39 @@ export class Searcher {
     }
   }
 
-  async search(query: string, plan: string[], previousFindings: string[]): Promise<Citation[]> {
-    const combinedQuery = `Researching: ${query}\nContext: ${previousFindings.slice(-2).join("\n")}`;
+  async search(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<Citation[]> {
+    let combinedQuery = query;
+    
+    if (filters) {
+      if (filters.domainRestriction) {
+        combinedQuery += ` site:${filters.domainRestriction}`;
+      }
+      if (filters.excludeKeywords && filters.excludeKeywords.length > 0) {
+        combinedQuery += ` -${filters.excludeKeywords.join(" -")}`;
+      }
+    }
+
+    const searchContext = `Researching: ${combinedQuery}\nContext: ${previousFindings.slice(-2).join("\n")}`;
     
     if (this.tvly) {
       try {
-        const response = await withRetry(() => this.tvly.search(combinedQuery, {
+        const tavilyOptions: any = {
           searchDepth: "advanced",
           maxResults: 5,
           includeAnswer: true,
-        })) as any;
+        };
+
+        if (filters?.dateRange && filters.dateRange !== "all") {
+          const daysMap: Record<string, number> = {
+            day: 1,
+            week: 7,
+            month: 30,
+            year: 365,
+          };
+          tavilyOptions.days = daysMap[filters.dateRange];
+        }
+
+        const response = await withRetry(() => this.tvly.search(searchContext, tavilyOptions)) as any;
 
         return response.results.map((r: any) => ({
           id: Math.random().toString(36).substring(7),
@@ -41,7 +64,7 @@ export class Searcher {
     try {
       const response = await withRetry(() => this.ai.models.generateContent({
         model: "gemini-3-flash-preview",
-        contents: `I am conducting deep research on: ${query}. 
+        contents: `I am conducting deep research on: ${combinedQuery}. 
         Based on these sub-queries: ${plan.join(", ")}
         And these previous findings: ${previousFindings.slice(-3).join("\n")}
         

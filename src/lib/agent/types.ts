@@ -35,11 +35,19 @@ export const ResearchReport = z.object({
 });
 export type ResearchReport = z.infer<typeof ResearchReport>;
 
+export const SearchFilters = z.object({
+  dateRange: z.enum(["day", "week", "month", "year", "all"]).default("all"),
+  domainRestriction: z.string().optional(), // e.g., "wikipedia.org"
+  excludeKeywords: z.array(z.string()).default([]),
+});
+export type SearchFilters = z.infer<typeof SearchFilters>;
+
 export const ResearchConfig = z.object({
   maxIterations: z.number().default(5),
   maxTimeSeconds: z.number().default(300),
   budgetTokens: z.number().default(100000),
   useFullPageFetch: z.boolean().default(true),
+  filters: SearchFilters.optional(),
 });
 export type ResearchConfig = z.infer<typeof ResearchConfig>;
 

@@ -12,17 +12,38 @@ export class Synthesizer {
   async synthesize(query: string, findings: string[], citations: Citation[]): Promise<Omit<ResearchReport, "metadata">> {
     const response = await withRetry(() => this.ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `You are a research synthesizer. Compile a comprehensive, high-quality research report based on the following findings and citations.
+      contents: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
+
+      ### Report Structure:
+      1. **Executive Summary**: A concise (1-2 paragraph) overview of the most critical research findings.
+      2. **Detailed Analysis**: A structured section with clear headings and sub-headings (e.g., Technical Analysis, Market Impact, Key Players).
+      3. **Conclusion**: A brief summary of the research's implications or future outlook.
+      4. **Citations**: Ensure every factual claim is supported by a citation in the format [1], [2], etc., corresponding to the provided citations list.
+
+      ### Guidelines:
+      - **Tone**: Professional, objective, and analytical.
+      - **Clarity**: Use clear, concise language.
+      - **Markdown**: Use Markdown for the \`content\` field (headings, lists, bold text).
+      - **Accuracy**: Only include information supported by the provided findings.
+
+      ### Example Report Structure:
+      # Research Report: [Topic]
+      ## Executive Summary
+      [Summary content...]
+      ## Technical Analysis
+      [Detailed content with citations [1]...]
+      ## Market Impact
+      [Detailed content with citations [2]...]
+      ## Conclusion
+      [Conclusion content...]
+
+      ### Research Data:
       Research Query: ${query}
       Findings: ${findings.join("\n")}
       Citations: ${JSON.stringify(citations)}
-      
-      The report should include:
-      1. A concise summary of the research findings.
-      2. A detailed content section with clear headings and sub-headings.
-      3. Clear citations for every claim made in the report. Use [1], [2], etc. to reference the citations.
-      
-      Please provide the report in a structured JSON format.`,
+
+      ### Output:
+      Provide the report in the specified JSON format.`,
       config: {
         responseMimeType: "application/json",
         responseSchema: {

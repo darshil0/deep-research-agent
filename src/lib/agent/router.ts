@@ -3,7 +3,7 @@ import { Planner } from "./planner.ts";
 import { SearchAgent } from "./searchAgent.ts";
 import { AnalysisAgent } from "./analysisAgent.ts";
 import { SynthesisAgent } from "./synthesisAgent.ts";
-import { Citation, ResearchReport } from "./types.ts";
+import { Citation, ResearchReport, SearchFilters } from "./types.ts";
 
 export type AgentRole = "planner" | "searcher" | "analyzer" | "synthesizer";
 
@@ -24,8 +24,8 @@ export class Router {
     return await this.planner.createPlan(query);
   }
 
-  async searchAndFetch(query: string, plan: string[], previousFindings: string[]) {
-    return await this.searchAgent.execute(query, plan, previousFindings);
+  async searchAndFetch(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters) {
+    return await this.searchAgent.execute(query, plan, previousFindings, filters);
   }
 
   async analyze(content: string, query: string, sourceTitle: string): Promise<string> {
