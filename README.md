@@ -2,16 +2,7 @@
 
 An autonomous, iterative research agent built with TypeScript/React (legacy Python version included), powered by Google's Gemini 2.0 Flash model.
 
-## Version 1.6.0 - Advanced History & Architecture Refactor
-
-This release introduces significant performance, usability, and stability improvements:
-
-- 🗄️ **Advanced History Sidebar**: A premium, collapsible sidebar with chronological grouping ("Today", "Yesterday", "Earlier") for managing past research tasks.
-- 🔄 **State Persistence**: Full `localStorage` integration ensures research sessions are preserved across browser refreshes and accidental closures.
-- 🏗️ **Simplified Architecture**: Refactored agent orchestration by removing redundant intermediate wrappers, resulting in faster execution and cleaner code.
-- 🧪 **Unit Testing Suite**: Established a robust testing framework using Vitest, covering core AI logic and utility modules.
-- ⚙️ **Enhanced Configuration**: Support for environment-based model selection (`AGENT_MODEL`), research results rotation (`RESULTS_MAX_AGE_DAYS`), and configurable cache TTL.
-- 🚀 **Performance Optimization**: Improved frontend responsiveness and smoother transitions using `framer-motion`.
+For a detailed history of changes and version updates, please see the [Changelog](file:///c:/Users/mayan/Downloads/deep-research-agent/Changelog.MD).
 
 ## Features
 
@@ -318,7 +309,6 @@ Contributions are welcome! Please follow these guidelines:
 
 - [ ] Multi-language support
 - [ ] Export reports in PDF format
-- [ ] Research history and comparison
 - [ ] Collaborative research sessions
 - [ ] Advanced visualization of research paths
 - [ ] Integration with more search APIs
