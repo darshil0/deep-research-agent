@@ -1,51 +1,49 @@
 # Deep Research Agent
 
-An autonomous, iterative research agent built with TypeScript/React (legacy Python version included), powered by Google's Gemini 2.0 Flash model.
+An autonomous, iterative research agent built with TypeScript/React, powered by Google's Gemini 2.0 Flash model. This production-ready platform performs deep web research, extracts evidence, and synthesizes comprehensive reports with citations.
 
 For a detailed history of changes and version updates, please see the [Changelog](file:///c:/Users/mayan/Downloads/deep-research-agent/Changelog.MD).
 
-## Features
+## 🚀 Features
 
-- **Iterative Research**: Expands search queries based on findings
-- **Full-Page Analysis**: Fetches and extracts evidence from web sources
-- **Research History**: Chronologically grouped sidebar to revisit and manage past reports
-- **Session Persistence**: Automatically resumes or restores current research state
-- **Citation Management**: Automatically tracks and cites sources with inline citations
-- **Advanced Search Filters**: Date range, domain restriction, and keyword exclusion
-- **Intelligent Caching**: File-based content cache with configurable TTL
-- **Real-time Progress**: WebSocket-based live updates with auto-reconnection
-- **Unit Tested**: Core logic is verified by a comprehensive testing suite
+- **Multi-Provider Search**: Choose between Tavily, Google Search Tool (Grounding), or a Hybrid mode for maximum research coverage.
+- **Secure API Authentication**: Protected by an `AUTH_TOKEN` system with Express middleware and secure WebSocket handshakes.
+- **Native Multi-language Support**: Automatically detects research language and generates reports in any user-specified language (English, Spanish, Chinese, French, German, Japanese, and more).
+- **Professional PDF Export**: One-click "Save as PDF" with optimized layout and typography for professional physical or digital distribution.
+- **Iterative Research**: Decomposes complex queries into sub-tasks and iteratively improves its understanding based on search findings.
+- **Research History Sidebar**: Chronologically grouped sidebar ("Today", "Yesterday", "Earlier") to revisit, search, and manage past reports.
+- **Session Persistence**: Automatic recovery of current research states from `localStorage` if the browser is refreshed.
+- **Intelligent Caching**: High-performance file-based content cache with configurable TTL and automatic rotation of old results.
+- **Real-time Progress**: Live updates via WebSocket with automatic reconnection and detailed activity logs.
+- **Unit Tested**: Core agent logic is verified by a robust suite of Vitest unit tests.
 
-## Architecture
+## 🏗️ Architecture
 
-### Backend (TypeScript/Node.js)
+### AI & Agent Layer (TypeScript)
+- **ResearchOrchestrator**: Manages the high-level research lifecycle (Plan -> Research -> Synthesize).
+- **Router**: Dispatches tasks to specific agent modules and handles state synchronization.
+- **Planner**: Decomposes the research topic into logical, actionable sub-queries using Gemini 1.5/2.0.
+- **Searcher**: A provider-agnostic search interface that can swap between Tavily, Google, or Hybrid backends.
+- **Analyzer**: Processes raw source content to extract relevant evidence and claims.
+- **Synthesizer**: Compiles findings into a structured Markdown report with mandatory inline citations.
 
-- **ResearchOrchestrator**: Manages the workflow with distinct phases (plan, research, synthesis)
-- **Router**: Directly dispatches tasks to core logic modules
-- **Planner**: Decomposes topics into subquestions using Gemini AI
-- **Searcher**: Interfaces with Tavily API and handles source fetching logic
-- **Analyzer**: Extracts evidence from source content
-- **Synthesizer**: Generates comprehensive reports with citations
-- **Fetcher**: Extracts text from URLs with content caching
-- **ContentCache**: File-based caching with configurable TTL and automatic rotation
+### Backend (Node.js/Express)
+- **Server**: Handles API endpoints, authentication middleware, and WebSocket connections.
+- **ContentCache**: A robust caching layer that stores fetched HTML content to reduce API costs and latency.
+- **Rotation Policy**: Automatically cleans up research results older than 7 days to manage storage.
 
-### Frontend (React + TypeScript)
+### Frontend (React + Vite)
+- **Modern UI**: A premium, dark-themed interface built for speed and visual excellence.
+- **Auth Modal**: Integrated task-level security for private or team research sessions.
+- **Responsive Design**: Fully optimized for mobile, tablet, and desktop workflows.
 
-- Modern dark-themed UI with premium aesthetics
-- **History Sidebar**: Collapsible, chronologically grouped task list
-- **State Restoration**: Automatic session recovery from `localStorage`
-- Real-time research progress tracking and activity logs
-- Interactive settings panel with advanced filters and model info
-- Downloadable Markdown reports
-
-## Setup
+## 🛠️ Setup
 
 ### Prerequisites
-
-- Node.js 18+ 
+- Node.js 18+
 - npm or yarn
-- Gemini API key (required)
-- Tavily API key (optional, but recommended for better search)
+- **Google AI Studio API Key** (Required for Gemini)
+- **Tavily API Key** (Optional, but recommended for advanced search)
 
 ### Installation
 
@@ -60,275 +58,75 @@ For a detailed history of changes and version updates, please see the [Changelog
    npm install
    ```
 
-3. Configure environment variables in `.env`:
-   ```env
+3. Configure your environment in `.env`:
+   ```bash
+   # Required
    GEMINI_API_KEY=your_gemini_api_key_here
-   TAVILY_API_KEY=your_tavily_api_key_here  # Optional
+   
+   # Optional Features
+   TAVILY_API_KEY=your_tavily_api_key_here
+   AUTH_TOKEN=your_secure_session_key         # Enable API protection
+   AGENT_MODEL=gemini-2.0-flash-exp           # Default model
    ```
-
-   **Important**: The `GEMINI_API_KEY` is **required**. Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
 
 4. Start the development server:
    ```bash
    npm run dev
    ```
 
-5. Open your browser to `http://localhost:3000`
+5. Access the application at `http://localhost:3000`.
 
-## Usage
-
-### Starting a Research Task
-
-1. Enter your research query in the input field (e.g., "The impact of quantum computing on cryptography")
-2. Optionally configure research settings:
-   - Max iterations (1-10)
-   - Time limit (60-600 seconds)
-   - Full-page fetch toggle
-   - Search filters (date range, domain restriction, keyword exclusion)
-3. Click the arrow button or press Enter to start
-4. Monitor real-time progress in the activity log
-5. Download the generated report as Markdown when complete
-
-### Advanced Settings
-
-**Search Filters:**
-- **Date Range**: Filter results by recency (past day, week, month, year, or all time)
-- **Domain Restriction**: Limit searches to specific domains (e.g., `wikipedia.org`)
-- **Exclude Keywords**: Remove results containing specific terms (comma-separated)
-
-**Research Configuration:**
-- **Max Iterations**: Number of search-analyze cycles (default: 3)
-- **Time Limit**: Maximum research duration in seconds (default: 300)
-- **Full-page Fetch**: Enable deep content extraction from sources
-
-### Cache Management
-
-The system automatically caches fetched content for 24 hours to improve performance. Clear the cache manually from the settings panel if needed.
-
-## API Reference
-
-### GET `/api/research/history`
-
-Fetch a summary of all past research tasks.
-
-**Response:**
-```json
-[
-  {
-    "taskId": "abc123",
-    "query": "Quantum Computing",
-    "timestamp": "2026-04-04T12:00:00.000Z",
-    "status": "completed"
-  }
-]
-```
-
-### GET `/api/research/results/:taskId`
-
-Get the full stored results for a specific past research task.
-
-**Response:**
-```json
-{
-  "status": "completed",
-  "report": { ... },
-  "steps": [ ... ]
-}
-```
-
-### GET `/api/research/status/:taskId`
-
-Get the current status of a research task.
-
-**Response:**
-```json
-{
-  "status": "searching",
-  "steps": [...],
-  "report": {...}
-}
-```
-
-### POST `/api/research/cache/clear`
-
-Clear the content cache.
-
-**Response:**
-```json
-{
-  "message": "Cache cleared"
-}
-```
-
-### WebSocket Connection
-
-Connect to `ws://localhost:3000?taskId={taskId}` for real-time updates.
-
-**Message Format:**
-```json
-{
-  "status": "searching",
-  "steps": [
-    {
-      "id": "step1",
-      "type": "planning",
-      "status": "completed",
-      "message": "Created 5 research tasks.",
-      "timestamp": "2026-04-04T12:00:00.000Z"
-    }
-  ]
-}
-```
-
-## Configuration
+## ⚙️ Configuration
 
 ### Environment Variables
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `GEMINI_API_KEY` | Yes | - | Google Gemini API key |
-| `TAVILY_API_KEY` | No | - | Tavily search API key (highly recommended) |
-| `AGENT_MODEL` | No | `gemini-2.0-flash-exp` | AI model to use for all agents |
-| `RESULTS_MAX_AGE_DAYS` | No | `7` | Days to keep research results before rotating |
-| `CACHE_TTL` | No | `86400` | Content cache TTL in seconds (default 24h) |
-| `LOG_LEVEL` | No | `INFO` | Logging level (DEBUG, INFO, ERROR) |
+| `GEMINI_API_KEY` | **Yes** | - | Google Gemini API key |
+| `TAVILY_API_KEY` | No | - | Tavily Search API key |
+| `AUTH_TOKEN` | No | - | Token required for API and WebSocket access |
+| `AGENT_MODEL` | No | `gemini-2.0-flash-exp` | AI model used for planning/synthesis |
+| `RESULTS_MAX_AGE_DAYS` | No | `7` | Days to keep result files |
+| `CACHE_TTL` | No | `86400` | Content cache duration (seconds) |
 
-### Research Configuration
+### Search Provider Modes
+- **Tavily**: Uses the Tavily API for highly relevant research results and content extraction.
+- **Google**: Uses the foundational Google Search tool for grounding (no extra API key needed beyond Gemini).
+- **Hybrid**: Uses both for maximum breadth and verification.
 
-| Option | Type | Default | Range | Description |
-|--------|------|---------|-------|-------------|
-| `maxIterations` | number | 3 | 1-10 | Maximum search-analyze cycles |
-| `maxTimeSeconds` | number | 300 | 60-600 | Time limit in seconds |
-| `budgetTokens` | number | 100000 | - | Token budget (not enforced) |
-| `useFullPageFetch` | boolean | true | - | Enable deep content extraction |
+## 📝 API Reference
 
-## Error Handling
+### Protected Endpoints (Requires `Authorization` header if `AUTH_TOKEN` is set)
+- `GET /api/research/history`: List all research tasks.
+- `POST /api/research/start`: Initialize a new research task.
+- `GET /api/research/results/:taskId`: Retrieve final report and steps.
+- `GET /api/research/status/:taskId`: Real-time status check.
 
-The application includes comprehensive error handling:
+### WebSocket
+- `ws://localhost:3000?taskId={taskId}&token={AUTH_TOKEN}`: Real-time research stream.
 
-- **API Errors**: Automatic retry with exponential backoff
-- **WebSocket Disconnections**: Auto-reconnection with visual feedback
-- **Cache Failures**: Graceful degradation with logging
-- **Invalid Responses**: Fallback to safe defaults
-- **Network Issues**: User-friendly error messages
-
-## Troubleshooting
-
-### "GEMINI_API_KEY is not set"
-
-Make sure you've created a `.env` file with your API key:
-```env
-GEMINI_API_KEY=your_actual_api_key_here
-```
-
-### WebSocket Connection Failed
-
-- Check that the server is running on port 3000
-- Ensure no firewall is blocking WebSocket connections
-- The UI will automatically attempt to reconnect
-
-### Search Returns No Results
-
-- Try broadening your query
-- Remove restrictive filters (domain restriction, date range)
-- Check that your Tavily API key is valid (if using)
-- Verify your internet connection
-
-### Cache Issues
-
-Clear the cache from the settings panel or manually delete the `research_results/cache` directory.
-
-## Development
-
-### Project Structure
-
-```
-deep-research-agent/
-├── docs/                          # Documentation files
-├── legacy/                        # Legacy code (Python version)
-├── src/
-│   ├── App.tsx                    # Main React component (History, UI, State)
-│   ├── lib/
-│   │   ├── agent/
-│   │   │   ├── orchestrator.ts    # Main orchestration logic
-│   │   │   ├── router.ts          # Logic dispatcher
-│   │   │   ├── planner.ts         # Query decomposition
-│   │   │   ├── searcher.ts        # Search & fetch consolidation
-│   │   │   ├── analyzer.ts        # Content analysis
-│   │   │   ├── synthesizer.ts     # Report synthesis
-│   │   │   ├── types.ts           # Shared TypeScript types
-│   │   │   └── __tests__/         # Unit testing suite (Planner, Analyzer, etc.)
-│   │   └── utils/
-│   │       ├── cache.ts           # Content caching & rotation
-│   │       ├── retry.ts           # Exponential backoff utility
-│   │       └── __tests__/         # Utility tests (Cache)
-│   └── index.css                  # Styles
-├── server.ts                      # Express + WebSocket server
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
+## 🧪 Development
 
 ### Running Tests
-
 ```bash
-# Run unit tests
-npm test
-
-# Run linting
-npm run lint
+npm test          # Run Vitest suite
+npm run lint      # Lint codebase
 ```
 
-### Building for Production
-
+### Build for Production
 ```bash
-npm run build
-npm run preview
+npm run build     # Output to /dist
+npm run preview   # Preview production build
 ```
 
-## Contributing
+## 📜 License
+MIT License - see [LICENSE](LICENSE) for details.
 
-Contributions are welcome! Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Known Limitations
-
-- Maximum report length limited by token constraints
-- Search depth depends on Tavily API tier (if using)
-- Cache TTL is fixed at 24 hours
-- No support for multi-language research queries
-- WebSocket may experience delays on slow connections
-
-## Future Enhancements
-
-- [ ] Multi-language support
-- [ ] Export reports in PDF format
-- [ ] Collaborative research sessions
-- [ ] Advanced visualization of research paths
-- [ ] Integration with more search APIs
-- [ ] Custom AI model selection
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Acknowledgments
-
-- Google Gemini for AI capabilities
-- Tavily for advanced search API
-- React and Tailwind CSS communities
-- All contributors and testers
-
-## Support
-
-For issues and questions:
-- GitHub Issues: [Create an issue](https://github.com/your-repo/issues)
+---
+**Version**: 1.7.0  
+**Status**: Feature Complete ✅  
+**Last Updated**: April 4, 2026
+es: [Create an issue](https://github.com/your-repo/issues)
 - Documentation: [Wiki](https://github.com/your-repo/wiki)
 
 ---
