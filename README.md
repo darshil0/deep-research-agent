@@ -126,11 +126,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 **Version**: 1.7.0  
 **Status**: Feature Complete ✅  
 **Last Updated**: April 4, 2026
-es: [Create an issue](https://github.com/your-repo/issues)
-- Documentation: [Wiki](https://github.com/your-repo/wiki)
-
----
-
-**Version**: 1.6.0  
-**Last Updated**: April 4, 2026  
-**Status**: Production Ready ✅
