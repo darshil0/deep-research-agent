@@ -1,8 +1,0 @@
-
-> react-example@1.5.1 dev
-> tsx server.ts
-
-CRITICAL: GEMINI_API_KEY is not set in environment variables.
-Server running on http://localhost:3000
-2:31:19 PM [vite] (client) page reload index.html
-2:31:25 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
