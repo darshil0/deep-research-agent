@@ -2,47 +2,50 @@
 
 An autonomous, iterative research agent built with TypeScript/React (legacy Python version included), powered by Google's Gemini 2.0 Flash model.
 
-## Version 1.5.1 - Structural Improvements
+## Version 1.6.0 - Advanced History & Architecture Refactor
 
-This release focuses on project organization and dependency maintenance:
+This release introduces significant performance, usability, and stability improvements:
 
-- 📂 **Project Reorganization**: Cleaned up the project root by moving all Python-related files and directories to `legacy/python-version/`.
-- 📖 **Documentation Consolidation**: Moved `BUG_FIX_SUMMARY.md` to the `docs/` directory for better organization.
-- 🧹 **Redundant File Cleanup**: Removed several redundant TypeScript files from the root that were already present in the `src/` directory.
-- 🆙 **Dependency Updates**: Updated all core libraries and devDependencies to their latest stable versions for improved security and performance.
-- 🏷️ **Version Bump**: Updated application version to 1.5.1 to reflect structural and dependency improvements.
+- 🗄️ **Advanced History Sidebar**: A premium, collapsible sidebar with chronological grouping ("Today", "Yesterday", "Earlier") for managing past research tasks.
+- 🔄 **State Persistence**: Full `localStorage` integration ensures research sessions are preserved across browser refreshes and accidental closures.
+- 🏗️ **Simplified Architecture**: Refactored agent orchestration by removing redundant intermediate wrappers, resulting in faster execution and cleaner code.
+- 🧪 **Unit Testing Suite**: Established a robust testing framework using Vitest, covering core AI logic and utility modules.
+- ⚙️ **Enhanced Configuration**: Support for environment-based model selection (`AGENT_MODEL`), research results rotation (`RESULTS_MAX_AGE_DAYS`), and configurable cache TTL.
+- 🚀 **Performance Optimization**: Improved frontend responsiveness and smoother transitions using `framer-motion`.
 
 ## Features
 
 - **Iterative Research**: Expands search queries based on findings
 - **Full-Page Analysis**: Fetches and extracts evidence from web sources
+- **Research History**: Chronologically grouped sidebar to revisit and manage past reports
+- **Session Persistence**: Automatically resumes or restores current research state
 - **Citation Management**: Automatically tracks and cites sources with inline citations
 - **Advanced Search Filters**: Date range, domain restriction, and keyword exclusion
 - **Intelligent Caching**: File-based content cache with configurable TTL
 - **Real-time Progress**: WebSocket-based live updates with auto-reconnection
-- **Multi-format Output**: Produces Markdown reports and structured JSON artifacts
+- **Unit Tested**: Core logic is verified by a comprehensive testing suite
 
 ## Architecture
 
 ### Backend (TypeScript/Node.js)
 
 - **ResearchOrchestrator**: Manages the workflow with distinct phases (plan, research, synthesis)
-- **Router**: Dispatches tasks to specialized agents
+- **Router**: Directly dispatches tasks to core logic modules
 - **Planner**: Decomposes topics into subquestions using Gemini AI
-- **SearchAgent**: Coordinates search and fetch operations
-- **AnalysisAgent**: Extracts evidence from content
-- **SynthesisAgent**: Generates comprehensive reports
-- **Searcher**: Interfaces with Tavily API and Google Search
+- **Searcher**: Interfaces with Tavily API and handles source fetching logic
+- **Analyzer**: Extracts evidence from source content
+- **Synthesizer**: Generates comprehensive reports with citations
 - **Fetcher**: Extracts text from URLs with content caching
-- **ContentCache**: File-based caching with TTL and automatic cleanup
+- **ContentCache**: File-based caching with configurable TTL and automatic rotation
 
 ### Frontend (React + TypeScript)
 
-- Modern dark-themed UI with Tailwind CSS
-- Real-time research progress tracking
-- Interactive settings panel with advanced filters
+- Modern dark-themed UI with premium aesthetics
+- **History Sidebar**: Collapsible, chronologically grouped task list
+- **State Restoration**: Automatic session recovery from `localStorage`
+- Real-time research progress tracking and activity logs
+- Interactive settings panel with advanced filters and model info
 - Downloadable Markdown reports
-- Mobile-responsive design with accessibility features
 
 ## Setup
 
@@ -113,32 +116,32 @@ The system automatically caches fetched content for 24 hours to improve performa
 
 ## API Reference
 
-### POST `/api/research/start`
+### GET `/api/research/history`
 
-Start a new research task.
+Fetch a summary of all past research tasks.
 
-**Request Body:**
+**Response:**
 ```json
-{
-  "query": "Your research query",
-  "config": {
-    "maxIterations": 3,
-    "maxTimeSeconds": 300,
-    "budgetTokens": 100000,
-    "useFullPageFetch": true,
-    "filters": {
-      "dateRange": "all",
-      "domainRestriction": "",
-      "excludeKeywords": []
-    }
+[
+  {
+    "taskId": "abc123",
+    "query": "Quantum Computing",
+    "timestamp": "2026-04-04T12:00:00.000Z",
+    "status": "completed"
   }
-}
+]
 ```
+
+### GET `/api/research/results/:taskId`
+
+Get the full stored results for a specific past research task.
 
 **Response:**
 ```json
 {
-  "taskId": "abc123"
+  "status": "completed",
+  "report": { ... },
+  "steps": [ ... ]
 }
 ```
 
@@ -190,11 +193,14 @@ Connect to `ws://localhost:3000?taskId={taskId}` for real-time updates.
 
 ### Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
-| `TAVILY_API_KEY` | No | Tavily search API key (recommended) |
-| `LOG_LEVEL` | No | Logging level (DEBUG, INFO, WARNING, ERROR) |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `GEMINI_API_KEY` | Yes | - | Google Gemini API key |
+| `TAVILY_API_KEY` | No | - | Tavily search API key (highly recommended) |
+| `AGENT_MODEL` | No | `gemini-2.0-flash-exp` | AI model to use for all agents |
+| `RESULTS_MAX_AGE_DAYS` | No | `7` | Days to keep research results before rotating |
+| `CACHE_TTL` | No | `86400` | Content cache TTL in seconds (default 24h) |
+| `LOG_LEVEL` | No | `INFO` | Logging level (DEBUG, INFO, ERROR) |
 
 ### Research Configuration
 
@@ -250,23 +256,21 @@ deep-research-agent/
 ├── docs/                          # Documentation files
 ├── legacy/                        # Legacy code (Python version)
 ├── src/
-│   ├── App.tsx                    # Main React component
+│   ├── App.tsx                    # Main React component (History, UI, State)
 │   ├── lib/
 │   │   ├── agent/
 │   │   │   ├── orchestrator.ts    # Main orchestration logic
-│   │   │   ├── router.ts          # Agent router
+│   │   │   ├── router.ts          # Logic dispatcher
 │   │   │   ├── planner.ts         # Query decomposition
-│   │   │   ├── searcher.ts        # Search operations
-│   │   │   ├── fetcher.ts         # Content fetching
+│   │   │   ├── searcher.ts        # Search & fetch consolidation
 │   │   │   ├── analyzer.ts        # Content analysis
 │   │   │   ├── synthesizer.ts     # Report synthesis
-│   │   │   ├── searchAgent.ts     # Search coordination
-│   │   │   ├── analysisAgent.ts   # Analysis coordination
-│   │   │   ├── synthesisAgent.ts  # Synthesis coordination
-│   │   │   └── types.ts           # TypeScript types
+│   │   │   ├── types.ts           # Shared TypeScript types
+│   │   │   └── __tests__/         # Unit testing suite (Planner, Analyzer, etc.)
 │   │   └── utils/
-│   │       ├── cache.ts           # Content caching
-│   │       └── retry.ts           # Retry logic
+│   │       ├── cache.ts           # Content caching & rotation
+│   │       ├── retry.ts           # Exponential backoff utility
+│   │       └── __tests__/         # Utility tests (Cache)
 │   └── index.css                  # Styles
 ├── server.ts                      # Express + WebSocket server
 ├── package.json
@@ -278,6 +282,10 @@ deep-research-agent/
 ### Running Tests
 
 ```bash
+# Run unit tests
+npm test
+
+# Run linting
 npm run lint
 ```
 
@@ -335,6 +343,6 @@ For issues and questions:
 
 ---
 
-**Version**: 1.5.1  
+**Version**: 1.6.0  
 **Last Updated**: April 4, 2026  
 **Status**: Production Ready ✅
