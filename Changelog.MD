@@ -2,6 +2,32 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.5.0] - 2026-04-04
+
+### Fixed
+- **Critical Model Name Bug**: Corrected all AI model references from non-existent `gemini-3-flash-preview` to the correct `gemini-2.0-flash-exp` model across all agent modules (Planner, Analyzer, Synthesizer, Searcher).
+- **Error Handling**: Added comprehensive try-catch blocks and error boundaries throughout the orchestrator, agent modules, and UI components to prevent crashes and improve resilience.
+- **Type Safety**: Improved TypeScript type checking with proper null guards, array validation, and type assertions in orchestrator, analyzer, and synthesizer modules.
+- **Cache Robustness**: Enhanced ContentCache with automatic directory creation, proper error handling for read/write operations, and cleanup of expired entries.
+- **WebSocket Stability**: Implemented automatic reconnection logic with exponential backoff, connection state tracking, and error notifications in the UI.
+- **API Key Validation**: Added explicit validation of GEMINI_API_KEY before orchestrator initialization with clear error messages.
+- **Date Range Filtering**: Completed implementation of time-based search filtering using Tavily's native `days` parameter with proper mapping for day/week/month/year ranges.
+- **Citation Consistency**: Improved citation formatting in synthesizer with better source-to-citation mapping and validation of report structure.
+- **State Management**: Enhanced orchestrator state updates with proper error propagation and step completion tracking.
+- **UI Accessibility**: Added proper ARIA labels, input validation, error states, and keyboard navigation support throughout the interface.
+
+### Improved
+- **Error Messages**: All error messages now include actionable information and proper context for debugging.
+- **Loading States**: Enhanced loading indicators with better visual feedback during long-running operations.
+- **Mobile Responsiveness**: Fixed several responsive design issues in the settings panel and report display.
+- **Cache Statistics**: Added cache statistics tracking method for monitoring cache usage and size.
+- **Version Bump**: Updated application version to 1.5.0 to reflect the comprehensive bug fixes and improvements.
+
+### Changed
+- **Model Configuration**: Standardized on `gemini-2.0-flash-exp` as the default model across all AI operations.
+- **Retry Logic**: Improved retry mechanism to properly identify transient errors vs permanent failures.
+- **Validation**: Added input validation for config parameters (max iterations, time limits) with sensible min/max bounds.
+
 ## [1.4.0] - 2026-03-31
 
 ### Added
