@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Loader2, CheckCircle2, XCircle, Clock, Hash, FileText, Settings, ExternalLink, ChevronRight, ChevronDown, Info, History, Menu, Plus, Trash2 } from "lucide-react";
+import { Search, Loader2, CheckCircle2, XCircle, Clock, Hash, FileText, Settings, ExternalLink, ChevronRight, Info, History, Menu, Plus } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ResearchState, ResearchConfig, ResearchStep, ResearchReport } from "./lib/agent/types.ts";
 import ReactMarkdown from "react-markdown";
@@ -331,7 +331,7 @@ export default function App() {
               <Settings className="w-5 h-5" />
             </button>
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">v1.5.1</div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">v1.7.0</div>
           </div>
         </div>
       </header>
@@ -674,7 +674,6 @@ export default function App() {
                       <div className="w-fit px-3 py-1 bg-emerald-500/10 text-emerald-400 rounded-full text-[10px] sm:text-xs font-semibold border border-emerald-500/20">
                         RESEARCH COMPLETE
                       </div>
-                      <div className="flex items-center gap-3 sm:gap-4">
                       <div className="flex items-center gap-3 sm:gap-4 no-print">
                         <button 
                           onClick={printToPdf}
@@ -701,7 +700,6 @@ export default function App() {
                             {state.report.metadata.totalSteps} STEPS
                           </div>
                         </div>
-                      </div>
                       </div>
                     </div>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 leading-tight font-serif italic text-white/90">{state.report.query}</h2>
