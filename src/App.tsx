@@ -155,7 +155,7 @@ export default function App() {
               <Settings className="w-5 h-5" />
             </button>
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
-            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">v1.4.0</div>
+            <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">v1.5.1</div>
           </div>
         </div>
       </header>

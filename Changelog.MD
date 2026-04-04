@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.5.1] - 2026-04-04
+
+### Changed
+- **Project Structure Reorganization**: Cleaned up the project root by moving all Python-related files and directories to `legacy/python-version/`.
+- **Documentation Organization**: Moved `BUG_FIX_SUMMARY.md` to the `docs/` directory.
+- **Redundant File Cleanup**: Removed several redundant TypeScript files from the root that were already present in the `src/` directory.
+
+### Improved
+- **Dependency Updates**: Updated all core libraries and devDependencies to their latest stable versions for improved security and performance.
+- **Version Bump**: Updated application version to 1.5.1 to reflect structural and dependency improvements.
+
 ## [1.5.0] - 2026-04-04
 
 ### Fixed
