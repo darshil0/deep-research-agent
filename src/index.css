@@ -50,3 +50,50 @@ body {
   font-family: var(--font-mono);
   letter-spacing: -0.02em;
 }
+
+/* Print Styles for PDF Export */
+@media print {
+  .no-print,
+  button,
+  .sidebar,
+  .settings-panel,
+  nav,
+  .logo-container,
+  .input-container {
+    display: none !important;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .report-container {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 20mm !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+    color: black !important;
+  }
+
+  p,
+  li {
+    page-break-inside: avoid;
+    color: black !important;
+  }
+
+  a {
+    text-decoration: underline;
+    color: blue !important;
+  }
+}

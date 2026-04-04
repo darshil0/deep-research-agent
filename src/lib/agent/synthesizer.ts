@@ -13,6 +13,9 @@ export class Synthesizer {
     const response = await withRetry(() => this.ai.models.generateContent({
       model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
       contents: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
+      
+      CRITICAL: Detect the language of the research query and respond ENTIRELY in that language.
+      The summary, detailed analysis, and conclusion must all be in the detected language.
 
       ### Report Structure:
       - **Summary Field**: Provide a concise (1-2 paragraph) overview of the most critical research findings.

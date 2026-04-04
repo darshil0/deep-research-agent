@@ -42,12 +42,16 @@ export const SearchFilters = z.object({
 });
 export type SearchFilters = z.infer<typeof SearchFilters>;
 
+export const SearchProviderType = z.enum(["tavily", "google", "hybrid"]);
+export type SearchProviderType = z.infer<typeof SearchProviderType>;
+
 export const ResearchConfig = z.object({
   maxIterations: z.number().default(5),
   maxTimeSeconds: z.number().default(300),
   budgetTokens: z.number().default(100000),
   useFullPageFetch: z.boolean().default(true),
   filters: SearchFilters.optional(),
+  provider: SearchProviderType.default("tavily"),
 });
 export type ResearchConfig = z.infer<typeof ResearchConfig>;
 

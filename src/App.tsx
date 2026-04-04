@@ -26,11 +26,16 @@ export default function App() {
     filters: {
       dateRange: "all",
       excludeKeywords: [],
-    }
+    },
+    provider: "tavily",
   });
+  const [targetLanguage, setTargetLanguage] = useState("Auto-detect");
   const [history, setHistory] = useState<any[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem("authToken"));
+  const [showAuthModal, setShowAuthModal] = useState(!localStorage.getItem("authToken"));
+  const [tempToken, setTempToken] = useState("");
 
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -48,7 +53,9 @@ export default function App() {
 
   const loadHistory = async () => {
     try {
-      const response = await fetch("/api/research/history");
+      const headers: any = {};
+      if (authToken) headers["Authorization"] = authToken;
+      const response = await fetch("/api/research/history", { headers });
       if (response.ok) {
         const data = await response.json();
         setHistory(data);
@@ -60,7 +67,9 @@ export default function App() {
 
   const fetchStatus = async (id: string) => {
     try {
-      const response = await fetch(`/api/research/status/${id}`);
+      const headers: any = {};
+      if (authToken) headers["Authorization"] = authToken;
+      const response = await fetch(`/api/research/status/${id}`, { headers });
       if (response.ok) {
         const data = await response.json();
         setState(data);
@@ -115,7 +124,10 @@ export default function App() {
   useEffect(() => {
     if (taskId) {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const ws = new WebSocket(`${protocol}//${window.location.host}?taskId=${taskId}`);
+      const wsUrl = new URL(`${protocol}//${window.location.host}`);
+      wsUrl.searchParams.set("taskId", taskId);
+      if (authToken) wsUrl.searchParams.set("token", authToken);
+      const ws = new WebSocket(wsUrl.toString());
       wsRef.current = ws;
 
       ws.onmessage = (event) => {
@@ -169,13 +181,22 @@ export default function App() {
     setState(null);
 
     try {
+      const headers: any = { "Content-Type": "application/json" };
+      if (authToken) headers["Authorization"] = authToken;
+      
       const response = await fetch("/api/research/start", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, config }),
+        headers,
+        body: JSON.stringify({ query, config: { ...config, language: targetLanguage } }),
       });
 
-      if (!response.ok) throw new Error("Failed to start research.");
+      if (!response.ok) {
+        if (response.status === 401) {
+          setShowAuthModal(true);
+          throw new Error("Authentication required.");
+        }
+        throw new Error("Failed to start research.");
+      }
       const data = await response.json();
       setTaskId(data.taskId);
       localStorage.setItem("lastTaskId", data.taskId);
@@ -202,6 +223,21 @@ export default function App() {
     toast.success("Report downloaded successfully.");
   };
 
+  const printToPdf = () => {
+    window.print();
+  };
+
+  const handleAuthSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (tempToken.trim()) {
+      setAuthToken(tempToken);
+      localStorage.setItem("authToken", tempToken);
+      setShowAuthModal(false);
+      toast.success("Authenticated successfully.");
+      loadHistory();
+    }
+  };
+
   const updateFilter = (key: keyof NonNullable<ResearchConfig["filters"]>, value: any) => {
     setConfig(prev => ({
       ...prev,
@@ -217,6 +253,49 @@ export default function App() {
   return (
     <div id="app-root" className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-blue-500/30">
       <Toaster position="top-center" theme="dark" />
+
+      {/* Auth Modal */}
+      <AnimatePresence>
+        {showAuthModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-[#1a1a1a] border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 right-0 p-4">
+                <button onClick={() => setShowAuthModal(false)} className="text-white/20 hover:text-white transition-colors">
+                  <XCircle className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="space-y-6">
+                <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                  <Settings className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-2">
+                  <h2 className="text-xl font-bold tracking-tight">Authentication Required</h2>
+                  <p className="text-white/40 text-sm">Please enter your research session key to access the agent and its history.</p>
+                </div>
+                <form onSubmit={handleAuthSubmit} className="space-y-4">
+                  <input 
+                    type="password"
+                    placeholder="Enter auth token..."
+                    value={tempToken}
+                    onChange={(e) => setTempToken(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-blue-500 transition-all text-sm"
+                  />
+                  <button 
+                    type="submit"
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20"
+                  >
+                    Authenticate
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       
       {/* Header */}
       <header id="main-header" className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
@@ -399,19 +478,35 @@ export default function App() {
                      </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">AI Model</label>
-                    <div className="relative">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="space-y-2">
+                      <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Search Provider</label>
                       <select 
-                        value={(import.meta as any).env.VITE_AGENT_MODEL || "gemini-2.0-flash-exp"}
-                        disabled={true}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm appearance-none opacity-50"
+                        value={config.provider}
+                        onChange={(e) => setConfig({ ...config, provider: e.target.value as any })}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm"
                       >
-                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
-                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (Legacy)</option>
+                        <option value="tavily">Tavily (Advanced)</option>
+                        <option value="google">Google (Fast/Foundational)</option>
+                        <option value="hybrid">Hybrid (Both)</option>
                       </select>
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/20 uppercase font-bold">ENV ONLY</div>
                     </div>
+                    <div className="space-y-2">
+                       <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Target Language</label>
+                       <select 
+                         value={targetLanguage}
+                         onChange={(e) => setTargetLanguage(e.target.value)}
+                         className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm"
+                       >
+                         <option value="Auto-detect">Auto-detect</option>
+                         <option value="English">English</option>
+                         <option value="Spanish">Español</option>
+                         <option value="French">Français</option>
+                         <option value="German">Deutsch</option>
+                         <option value="Chinese">中文</option>
+                         <option value="Japanese">日本語</option>
+                       </select>
+                     </div>
                   </div>
 
                   <div className="flex items-center gap-3">
@@ -580,6 +675,14 @@ export default function App() {
                         RESEARCH COMPLETE
                       </div>
                       <div className="flex items-center gap-3 sm:gap-4">
+                      <div className="flex items-center gap-3 sm:gap-4 no-print">
+                        <button 
+                          onClick={printToPdf}
+                          className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[10px] sm:text-xs transition-all shadow-lg shadow-blue-600/20"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          SAVE AS PDF
+                        </button>
                         <button 
                           id="download-report-btn"
                           onClick={downloadReport}
@@ -598,6 +701,7 @@ export default function App() {
                             {state.report.metadata.totalSteps} STEPS
                           </div>
                         </div>
+                      </div>
                       </div>
                     </div>
                     <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-4 leading-tight font-serif italic text-white/90">{state.report.query}</h2>

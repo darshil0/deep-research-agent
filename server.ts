@@ -36,12 +36,22 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  // Validate API Key
-  if (!process.env.GEMINI_API_KEY) {
-    console.error("CRITICAL: GEMINI_API_KEY is not set in environment variables.");
-  }
+  // Authentication Middleware
+  const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const token = req.headers["authorization"] || req.query.token;
+    if (process.env.AUTH_TOKEN && token !== process.env.AUTH_TOKEN) {
+      return res.status(401).json({ error: "Unauthorized: Invalid or missing AUTH_TOKEN" });
+    }
+    next();
+  };
 
   app.use(express.json());
+
+  // Public status route
+  app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+
+  // Protected routes
+  app.use("/api/research", authMiddleware);
 
   // In-memory storage for research tasks
   const tasks = new Map<string, ResearchState>();
@@ -166,7 +176,17 @@ async function startServer() {
   // WebSocket setup
   const wss = new WebSocketServer({ server });
   wss.on("connection", (ws, req) => {
-    const taskId = new URL(req.url!, `http://${req.headers.host}`).searchParams.get("taskId");
+    const url = new URL(req.url!, `http://${req.headers.host}`);
+    const taskId = url.searchParams.get("taskId");
+    const token = url.searchParams.get("token");
+
+    // Secure WebSocket connection
+    if (process.env.AUTH_TOKEN && token !== process.env.AUTH_TOKEN) {
+      ws.send(JSON.stringify({ type: "error", message: "Unauthorized" }));
+      ws.close(1008, "Unauthorized");
+      return;
+    }
+
     if (taskId) {
       clients.set(taskId, ws);
       const state = tasks.get(taskId);

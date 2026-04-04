@@ -28,8 +28,8 @@ export class ResearchOrchestrator {
       throw new Error("GEMINI_API_KEY is not set. Please provide a valid API key in the environment variables.");
     }
     
-    this.ai = new GoogleGenAI({ apiKey });
-    this.router = new Router(this.ai);
+    this.ai = new GoogleGenAI(apiKey);
+    this.router = new Router(this.ai, config.provider);
   }
 
   private async persist() {

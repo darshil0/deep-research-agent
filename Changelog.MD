@@ -2,6 +2,23 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.7.0] - 2026-04-04
+
+### Added
+- **Multi-Provider Search Infrastructure**: Implemented a flexible search provider abstraction supporting Tavily, Google Search Tool (Grounding), and a Hybrid mode for comprehensive research coverage.
+- **Secure API Authentication**: Integrated a robust authentication layer with Express middleware and a secure WebSocket handshake, protected by an `AUTH_TOKEN`.
+- **Integrated Auth Modal**: Added a premium authentication modal in the frontend with session persistence and automatic redirection for unauthorized requests.
+- **PDF Export Capability**: Implemented a dedicated "Save as PDF" feature with optimized `@media print` CSS rules to ensure professional, high-quality report formatting.
+- **Native Multi-language Support**: Enhanced the `Planner` and `Synthesizer` prompts with automatic language detection, enabling the agent to research and report in any user-specified language.
+
+### Fixed
+- **Synthesizer Syntax Error**: Resolved a critical template literal error in the `Synthesizer` class that was causing parsing failures in agent responses.
+- **Search Logic Coupling**: Decoupled the `Searcher` from specific API implementations, moving towards a dependency-injection pattern for better testability.
+
+### Improved
+- **Research Orchestration**: Updated the `Orchestrator` to support dynamic provider selection and improved state synchronization for better transparency.
+- **UI Settings Panel**: Expanded the settings panel with intuitive controls for search providers and target language detection.
+
 ## [1.6.0] - 2026-04-04
 
 ### Added

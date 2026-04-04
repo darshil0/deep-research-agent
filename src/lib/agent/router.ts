@@ -12,12 +12,14 @@ export class Router {
   private searcher: Searcher;
   private analyzer: Analyzer;
   private synthesizer: Synthesizer;
+  private providerType: SearchProviderType;
 
-  constructor(ai: GoogleGenAI) {
+  constructor(ai: GoogleGenAI, providerType: SearchProviderType = "tavily") {
     this.planner = new Planner(ai);
-    this.searcher = new Searcher(ai);
+    this.searcher = new Searcher(ai, providerType);
     this.analyzer = new Analyzer(ai);
     this.synthesizer = new Synthesizer(ai);
+    this.providerType = providerType;
   }
 
   async plan(query: string): Promise<string[]> {
