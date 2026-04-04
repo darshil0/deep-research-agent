@@ -1,18 +1,16 @@
 # Deep Research Agent
 
-An autonomous, iterative research agent built with TypeScript/React and Python, powered by Google's Gemini 2.0 Flash model.
+An autonomous, iterative research agent built with TypeScript/React (legacy Python version included), powered by Google's Gemini 2.0 Flash model.
 
-## Version 1.5.0 - Major Bug Fixes
+## Version 1.5.1 - Structural Improvements
 
-This release addresses critical bugs and improves overall stability:
+This release focuses on project organization and dependency maintenance:
 
-- ✅ Fixed incorrect AI model references (now using `gemini-2.0-flash-exp`)
-- ✅ Enhanced error handling across all components
-- ✅ Improved type safety with proper null checks
-- ✅ Added WebSocket auto-reconnection
-- ✅ Better cache management and error recovery
-- ✅ Complete date range filter implementation
-- ✅ Improved accessibility and mobile responsiveness
+- 📂 **Project Reorganization**: Cleaned up the project root by moving all Python-related files and directories to `legacy/python-version/`.
+- 📖 **Documentation Consolidation**: Moved `BUG_FIX_SUMMARY.md` to the `docs/` directory for better organization.
+- 🧹 **Redundant File Cleanup**: Removed several redundant TypeScript files from the root that were already present in the `src/` directory.
+- 🆙 **Dependency Updates**: Updated all core libraries and devDependencies to their latest stable versions for improved security and performance.
+- 🏷️ **Version Bump**: Updated application version to 1.5.1 to reflect structural and dependency improvements.
 
 ## Features
 
@@ -249,6 +247,8 @@ Clear the cache from the settings panel or manually delete the `research_results
 
 ```
 deep-research-agent/
+├── docs/                          # Documentation files
+├── legacy/                        # Legacy code (Python version)
 ├── src/
 │   ├── App.tsx                    # Main React component
 │   ├── lib/
@@ -335,6 +335,6 @@ For issues and questions:
 
 ---
 
-**Version**: 1.5.0  
+**Version**: 1.5.1
 **Last Updated**: April 4, 2026  
 **Status**: Production Ready ✅
