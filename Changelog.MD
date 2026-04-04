@@ -2,6 +2,25 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.6.0] - 2026-04-04
+
+### Added
+- **Advanced History Sidebar**: Implemented a premium, collapsible history sidebar with chronological grouping ("Today", "Yesterday", "Earlier") and active task states.
+- **State Persistence & Resilience**: Added `localStorage` persistence for research tasks, allowing for automatic reconnection and state restoration after browser refreshes.
+- **Unit Testing Suite**: Established a comprehensive testing framework using Vitest, including unit tests for `Planner`, `Analyzer`, `Synthesizer`, and `ContentCache`.
+- **Multi-Environment Configuration**: Added `.env.example` with detailed documentation for all new configuration options (TTL, Rotation, Model).
+- **Backend API Extensions**: Added new REST endpoints for history listing and individual task retrieval to support the frontend history management.
+
+### Changed
+- **Major Architecture Refactoring**: Simplified agent architecture by removing redundant `SearchAgent`, `AnalysisAgent`, and `SynthesisAgent` wrappers, moving core logic directly into `Searcher`, `Analyzer`, and `Synthesizer`.
+- **Flexible Model Selection**: Introduced environment-based model selection via `AGENT_MODEL`, with enhanced fallback logic to `gemini-2.0-flash-exp`.
+- **Research Results Rotation**: Implemented a server-side rotation policy to automatically clean up research results older than 7 days (configurable via `RESULTS_MAX_AGE_DAYS`).
+- **Cache Configuration**: Made the `ContentCache` TTL configurable via the `CACHE_TTL` environment variable.
+
+### Improved
+- **UI Performance**: Optimized the sidebar and activity log for better responsiveness and smoother transitions using `framer-motion`.
+- **Error Propagation**: Enhanced the `Router` and `Orchestrator` to provide more granular error details during task failures.
+
 ## [1.5.1] - 2026-04-04
 
 ### Changed

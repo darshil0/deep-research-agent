@@ -10,7 +10,7 @@ export class Analyzer {
 
   async analyze(content: string, query: string, sourceTitle: string): Promise<string> {
     const response = await withRetry(() => this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
       contents: `You are a senior research analyst. Your task is to extract high-quality, evidence-based findings from the provided source content that directly address the research query.
 
       ### Instructions:
@@ -44,7 +44,7 @@ export class Analyzer {
 
   async checkCompleteness(query: string, findings: string[]): Promise<boolean> {
     const response = await withRetry(() => this.ai.models.generateContent({
-      model: "gemini-3-flash-preview",
+      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
       contents: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
       Research Query: ${query}
       Findings: ${findings.join("\n")}

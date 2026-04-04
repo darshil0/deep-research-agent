@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Loader2, CheckCircle2, XCircle, Clock, Hash, FileText, Settings, ExternalLink, ChevronRight, ChevronDown, Info } from "lucide-react";
+import { Search, Loader2, CheckCircle2, XCircle, Clock, Hash, FileText, Settings, ExternalLink, ChevronRight, ChevronDown, Info, History, Menu, Plus, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { ResearchState, ResearchConfig, ResearchStep, ResearchReport } from "./lib/agent/types.ts";
 import ReactMarkdown from "react-markdown";
 import { toast, Toaster } from "sonner";
-import { format } from "date-fns";
+import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -28,9 +28,89 @@ export default function App() {
       excludeKeywords: [],
     }
   });
+  const [history, setHistory] = useState<any[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Restore task from localStorage and load history
+  useEffect(() => {
+    const savedTaskId = localStorage.getItem("lastTaskId");
+    if (savedTaskId) {
+      setTaskId(savedTaskId);
+      fetchStatus(savedTaskId);
+    }
+    loadHistory();
+    setIsInitialLoading(false);
+  }, []);
+
+  const loadHistory = async () => {
+    try {
+      const response = await fetch("/api/research/history");
+      if (response.ok) {
+        const data = await response.json();
+        setHistory(data);
+      }
+    } catch (err) {
+      console.error("Failed to load history:", err);
+    }
+  };
+
+  const fetchStatus = async (id: string) => {
+    try {
+      const response = await fetch(`/api/research/status/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setState(data);
+        if (data.status === "completed" || data.status === "failed") {
+          setIsResearching(false);
+        } else {
+          setIsResearching(true);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch task status:", err);
+    }
+  };
+
+  const selectHistoryItem = async (id: string) => {
+    setTaskId(id);
+    localStorage.setItem("lastTaskId", id);
+    try {
+      const response = await fetch(`/api/research/results/${id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setState(data);
+        setIsResearching(data.status !== "completed" && data.status !== "failed");
+        setQuery("");
+      }
+    } catch (err) {
+      toast.error("Failed to load research result.");
+    }
+  };
+
+  const startNewResearch = () => {
+    setTaskId(null);
+    setState(null);
+    setQuery("");
+    setIsResearching(false);
+    localStorage.removeItem("lastTaskId");
+  };
+
+  const groupedHistory = history.reduce((acc: Record<string, any[]>, item) => {
+    const date = new Date(item.timestamp);
+    let group = "Earlier";
+    
+    if (isToday(date)) group = "Today";
+    else if (isYesterday(date)) group = "Yesterday";
+    else if (isThisWeek(date)) group = "This Week";
+    
+    if (!acc[group]) acc[group] = [];
+    acc[group].push(item);
+    return acc;
+  }, {});
 
   useEffect(() => {
     if (taskId) {
@@ -98,6 +178,8 @@ export default function App() {
       if (!response.ok) throw new Error("Failed to start research.");
       const data = await response.json();
       setTaskId(data.taskId);
+      localStorage.setItem("lastTaskId", data.taskId);
+      loadHistory(); // Refresh history list
     } catch (err: any) {
       toast.error(err.message);
       setIsResearching(false);
@@ -138,15 +220,30 @@ export default function App() {
       
       {/* Header */}
       <header id="main-header" className="border-b border-white/10 bg-black/50 backdrop-blur-xl sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button 
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 hover:bg-white/5 rounded-lg transition-colors text-white/60 hover:text-white"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+              </div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">Deep Research Agent</h1>
             </div>
-            <h1 className="text-base sm:text-lg font-semibold tracking-tight truncate max-w-[150px] sm:max-w-none">Deep Research Agent</h1>
           </div>
           
           <div className="flex items-center gap-2 sm:gap-4">
+            <button 
+              onClick={startNewResearch}
+              className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 rounded-lg text-xs font-semibold border border-blue-600/20 transition-all"
+            >
+              <Plus className="w-4 h-4" />
+              NEW RESEARCH
+            </button>
             <button 
               id="settings-toggle"
               onClick={() => setShowSettings(!showSettings)}
@@ -160,8 +257,89 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
+      <div className="flex h-[calc(100-4rem)] overflow-hidden">
+        {/* Sidebar */}
+        <AnimatePresence initial={false}>
+          {isSidebarOpen && (
+            <motion.aside
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 300, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              className="border-r border-white/10 bg-black/20 backdrop-blur-md overflow-hidden flex flex-col"
+            >
+              <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-white/40">
+                  <History className="w-4 h-4" />
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em]">Research History</span>
+                </div>
+                <button 
+                  onClick={loadHistory}
+                  className="p-1.5 hover:bg-white/5 rounded-md text-white/20 hover:text-white transition-colors"
+                >
+                  <Loader2 className={cn("w-3.5 h-3.5", isInitialLoading && "animate-spin")} />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3 space-y-6 scrollbar-thin scrollbar-thumb-white/5">
+                {history.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-3 opacity-20">
+                    <History className="w-8 h-8" />
+                    <p className="text-xs">No previous research found</p>
+                  </div>
+                ) : (
+                  Object.entries(groupedHistory).map(([group, items]: [string, any[]]) => (
+                    <div key={group} className="space-y-2">
+                      <div className="px-2 text-[9px] font-bold text-white/20 uppercase tracking-widest">{group}</div>
+                      {items.map((item) => (
+                        <button
+                          key={item.taskId}
+                          onClick={() => selectHistoryItem(item.taskId)}
+                          className={cn(
+                            "w-full text-left p-3 rounded-xl border transition-all group relative overflow-hidden",
+                            taskId === item.taskId 
+                              ? "bg-blue-600/10 border-blue-600/30 text-blue-400" 
+                              : "bg-white/5 border-white/5 text-white/40 hover:bg-white/10 hover:border-white/10 hover:text-white"
+                          )}
+                        >
+                          {taskId === item.taskId && (
+                            <motion.div 
+                              layoutId="active-history"
+                              className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"
+                            />
+                          )}
+                          <div className="flex flex-col gap-1">
+                            <div className="text-xs font-medium line-clamp-2 leading-relaxed">
+                              {item.query}
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <span className="text-[9px] font-mono opacity-50 uppercase">{format(new Date(item.timestamp), "HH:mm")}</span>
+                              {item.status === "completed" && <CheckCircle2 className="w-3 h-3 text-emerald-500/50" />}
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="p-4 border-t border-white/10">
+                <button 
+                  onClick={startNewResearch}
+                  className="w-full flex items-center justify-center gap-2 p-3 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-medium transition-all"
+                >
+                  <Plus className="w-4 h-4" />
+                  Start New Task
+                </button>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Main Content Area */}
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-[#0a0a0a] to-[#0f0f12]">
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12">
           
           {/* Left Column: Input & Progress */}
           <div className="md:col-span-5 space-y-8">
@@ -211,13 +389,28 @@ export default function App() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Time Limit (s)</label>
-                      <input 
-                        type="number" 
-                        value={config.maxTimeSeconds}
-                        onChange={(e) => setConfig({ ...config, maxTimeSeconds: parseInt(e.target.value) })}
-                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
-                      />
+                       <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">Time Limit (s)</label>
+                       <input 
+                         type="number" 
+                         value={config.maxTimeSeconds}
+                         onChange={(e) => setConfig({ ...config, maxTimeSeconds: parseInt(e.target.value) })}
+                         className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+                       />
+                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs text-white/40 uppercase tracking-wider font-semibold">AI Model</label>
+                    <div className="relative">
+                      <select 
+                        value={(import.meta as any).env.VITE_AGENT_MODEL || "gemini-2.0-flash-exp"}
+                        disabled={true}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 text-sm appearance-none opacity-50"
+                      >
+                        <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Exp</option>
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview (Legacy)</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-white/20 uppercase font-bold">ENV ONLY</div>
                     </div>
                   </div>
 
@@ -453,20 +646,22 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-        </div>
-      </main>
+            </div>
+          </main>
 
-      {/* Footer */}
-      <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-white/10 mt-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white/20 text-[10px] sm:text-xs font-mono text-center md:text-left">
-          <div>© 2026 DEEP RESEARCH AGENT. ALL RIGHTS RESERVED.</div>
-          <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8">
-            <a href="#" className="hover:text-white transition-colors">DOCUMENTATION</a>
-            <a href="#" className="hover:text-white transition-colors">API REFERENCE</a>
-            <a href="#" className="hover:text-white transition-colors">PRIVACY POLICY</a>
-          </div>
+          {/* Footer */}
+          <footer className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 border-t border-white/10 mt-12 bg-black/20">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-white/20 text-[10px] sm:text-xs font-mono text-center md:text-left">
+              <div>© 2026 DEEP RESEARCH AGENT. ALL RIGHTS RESERVED.</div>
+              <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-8">
+                <a href="#" className="hover:text-white transition-colors">DOCUMENTATION</a>
+                <a href="#" className="hover:text-white transition-colors">API REFERENCE</a>
+                <a href="#" className="hover:text-white transition-colors">PRIVACY POLICY</a>
+              </div>
+            </div>
+          </footer>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }

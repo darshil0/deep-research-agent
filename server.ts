@@ -3,10 +3,36 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer, WebSocket } from "ws";
 import path from "path";
+import fs from "fs/promises";
 import { ResearchOrchestrator } from "./src/lib/agent/orchestrator.ts";
 import { ResearchConfig, ResearchState } from "./src/lib/agent/types.ts";
 
+async function rotateResults() {
+  try {
+    const dir = path.join(process.cwd(), "research_results");
+    await fs.mkdir(dir, { recursive: true });
+    const files = await fs.readdir(dir);
+    const now = Date.now();
+    const maxAgeDays = process.env.RESULTS_MAX_AGE_DAYS ? parseInt(process.env.RESULTS_MAX_AGE_DAYS) : 7;
+    const maxAge = maxAgeDays * 24 * 60 * 60 * 1000;
+
+    for (const file of files) {
+      if (file.endsWith(".json") && file !== "cache") {
+        const filePath = path.join(dir, file);
+        const stats = await fs.stat(filePath);
+        if (now - stats.mtimeMs > maxAge) {
+          await fs.unlink(filePath);
+          console.log(`Rotated old result: ${file}`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Failed to rotate results:", err);
+  }
+}
+
 async function startServer() {
+  await rotateResults();
   const app = express();
   const PORT = 3000;
 
@@ -64,6 +90,47 @@ async function startServer() {
     const state = tasks.get(taskId);
     if (!state) return res.status(404).json({ error: "Task not found" });
     res.json(state);
+  });
+
+  app.get("/api/research/history", async (req, res) => {
+    try {
+      const dir = path.join(process.cwd(), "research_results");
+      await fs.mkdir(dir, { recursive: true });
+      const files = await fs.readdir(dir);
+      const history = [];
+
+      for (const file of files) {
+        if (file.endsWith(".json") && file !== "cache") {
+          const content = await fs.readFile(path.join(dir, file), "utf-8");
+          const state: ResearchState = JSON.parse(content);
+          if (state.report) {
+            history.push({
+              taskId: file.replace(".json", ""),
+              query: state.report.query,
+              timestamp: state.report.metadata.timestamp || new Date().toISOString(), // Fallback
+              status: state.status,
+            });
+          }
+        }
+      }
+
+      // Sort by timestamp descending
+      history.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      res.json(history);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/research/results/:taskId", async (req, res) => {
+    const { taskId } = req.params;
+    try {
+      const filePath = path.join(process.cwd(), "research_results", `${taskId}.json`);
+      const content = await fs.readFile(filePath, "utf-8");
+      res.json(JSON.parse(content));
+    } catch (err) {
+      res.status(404).json({ error: "Result not found" });
+    }
   });
 
   app.post("/api/research/cache/clear", async (req, res) => {

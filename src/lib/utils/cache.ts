@@ -12,9 +12,10 @@ export class ContentCache {
   private cacheDir: string;
   private ttl: number; // TTL in milliseconds
 
-  constructor(ttl: number = 24 * 60 * 60 * 1000) { // Default 24 hours
+  constructor(ttl?: number) {
     this.cacheDir = path.join(process.cwd(), "research_results", "cache");
-    this.ttl = ttl;
+    const envTtl = process.env.CACHE_TTL ? parseInt(process.env.CACHE_TTL) * 1000 : null;
+    this.ttl = ttl ?? envTtl ?? 24 * 60 * 60 * 1000;
   }
 
   private getCachePath(url: string): string {

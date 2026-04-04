@@ -2,16 +2,38 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { Citation, SearchFilters } from "./types.ts";
 import { tavily } from "@tavily/core";
 import { withRetry } from "../utils/retry.ts";
+import { Fetcher } from "./fetcher.ts";
 
 export class Searcher {
   private ai: GoogleGenAI;
   private tvly: any;
+  private fetcher: Fetcher;
 
   constructor(ai: GoogleGenAI) {
     this.ai = ai;
+    this.fetcher = new Fetcher();
     if (process.env.TAVILY_API_KEY) {
       this.tvly = tavily({ apiKey: process.env.TAVILY_API_KEY });
     }
+  }
+
+  async searchAndFetch(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<{ sources: Citation[]; contents: { source: Citation; content: string }[] }> {
+    const searchResults = await this.search(query, plan, previousFindings, filters);
+    const topSources = searchResults.slice(0, 3);
+    const contents: { source: Citation; content: string }[] = [];
+
+    for (const source of topSources) {
+      try {
+        const content = await this.fetcher.fetch(source.url);
+        if (content) {
+          contents.push({ source, content });
+        }
+      } catch (err) {
+        console.error(`Searcher: Failed to fetch ${source.url}:`, err);
+      }
+    }
+
+    return { sources: searchResults, contents };
   }
 
   async search(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<Citation[]> {
@@ -63,7 +85,7 @@ export class Searcher {
     // Fallback to Google Search Tool
     try {
       const response = await withRetry(() => this.ai.models.generateContent({
-        model: "gemini-3-flash-preview",
+        model: "gemini-2.0-flash-exp",
         contents: `I am conducting deep research on: ${combinedQuery}. 
         Based on these sub-queries: ${plan.join(", ")}
         And these previous findings: ${previousFindings.slice(-3).join("\n")}
