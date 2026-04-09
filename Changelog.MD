@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.7.1] - 2026-04-09
+
+### Fixed
+- **Google GenAI API Integration**: Corrected the SDK usage pattern in `Planner`, `Analyzer`, `Synthesizer`, and `SearchProvider` to match the `@google/genai` version 1.48.0. Standardized on `this.ai.models.generateContent` with the expected parameter structure.
+- **Type Safety and Missing Imports**: Resolved multiple TypeScript errors by adding missing `SearchProviderType` imports and extending the `ResearchReport` metadata schema to include mandatory `timestamp` fields.
+- **Missing Test Dependencies**: Added `vitest` to `devDependencies` and configured a `test` script in `package.json` to enable the unit testing suite.
+- **Unit Test Stability**: Updated the entire Vitest suite to correctly mock the generative AI responses and fixed the `ContentCache` test to properly handle JSON serialization of cache entries.
+
+### Improved
+- **Orchestrator Robustness**: Improved the `ResearchOrchestrator` by ensuring proper metadata collection and fixing the `GoogleGenAI` initialization pattern.
+
 ## [1.7.0] - 2026-04-04
 
 ### Added

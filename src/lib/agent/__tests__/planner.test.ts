@@ -4,15 +4,7 @@ import { Planner } from "../planner.ts";
 describe("Planner", () => {
   it("should generate a research plan from a query", async () => {
     const mockGenerateContent = vi.fn().mockResolvedValue({
-      response: {
-        candidates: [
-          {
-            content: {
-              parts: [{ text: JSON.stringify(["Sub-query 1", "Sub-query 2"]) }]
-            }
-          }
-        ]
-      }
+      text: JSON.stringify(["Sub-query 1", "Sub-query 2"])
     });
 
     const mockAi = {
@@ -28,22 +20,15 @@ describe("Planner", () => {
     expect(mockGenerateContent).toHaveBeenCalled();
   });
 
-  it("should handle invalid JSON from AI", async () => {
+  it("should handle invalid JSON from AI by falling back to original query", async () => {
      const mockGenerateContent = vi.fn().mockResolvedValue({
-      response: {
-        candidates: [
-          {
-            content: {
-              parts: [{ text: "not json" }]
-            }
-          }
-        ]
-      }
+      text: "not json"
     });
 
     const mockAi = { models: { generateContent: mockGenerateContent } } as any;
     const planner = new Planner(mockAi);
     
-    await expect(planner.createPlan("test")).rejects.toThrow();
+    const plan = await planner.createPlan("test");
+    expect(plan).toEqual(["test"]);
   });
 });

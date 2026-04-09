@@ -11,7 +11,10 @@ export class Analyzer {
   async analyze(content: string, query: string, sourceTitle: string): Promise<string> {
     const response = await withRetry(() => this.ai.models.generateContent({
       model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: `You are a senior research analyst. Your task is to extract high-quality, evidence-based findings from the provided source content that directly address the research query.
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `You are a senior research analyst. Your task is to extract high-quality, evidence-based findings from the provided source content that directly address the research query.
 
       ### Instructions:
       - **Be Specific**: Include exact numbers, dates, names, and technical details.
@@ -34,9 +37,8 @@ export class Analyzer {
       Source Content: ${content.substring(0, 5000)}
 
       ### Findings:`,
-      config: {
-        responseMimeType: "text/plain",
-      },
+        }],
+      }],
     }));
 
     return response.text || "";
@@ -45,11 +47,16 @@ export class Analyzer {
   async checkCompleteness(query: string, findings: string[]): Promise<boolean> {
     const response = await withRetry(() => this.ai.models.generateContent({
       model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
       Research Query: ${query}
       Findings: ${findings.join("\n")}
       
       Please answer with a boolean value: true if we have enough information, false otherwise.`,
+        }],
+      }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {

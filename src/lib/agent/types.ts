@@ -30,6 +30,7 @@ export const ResearchReport = z.object({
   metadata: z.object({
     totalSteps: z.number(),
     totalTime: z.number(),
+    timestamp: z.string(),
     totalCost: z.number().optional(),
   }),
 });
