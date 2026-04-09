@@ -11,9 +11,7 @@ describe("Synthesizer", () => {
       };
   
       const mockGenerateContent = vi.fn().mockResolvedValue({
-        response: {
-          candidates: [{ content: { parts: [{ text: JSON.stringify(mockReport) }] } }]
-        }
+        text: JSON.stringify(mockReport)
       });
   
       const mockAi = { models: { generateContent: mockGenerateContent } } as any;

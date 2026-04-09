@@ -3,7 +3,7 @@ import { Planner } from "./planner.ts";
 import { Searcher } from "./searcher.ts";
 import { Analyzer } from "./analyzer.ts";
 import { Synthesizer } from "./synthesizer.ts";
-import { Citation, ResearchReport, SearchFilters } from "./types.ts";
+import { Citation, ResearchReport, SearchFilters, SearchProviderType } from "./types.ts";
 
 export type AgentRole = "planner" | "searcher" | "analyzer" | "synthesizer";
 

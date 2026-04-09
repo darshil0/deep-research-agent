@@ -12,7 +12,10 @@ export class Synthesizer {
   async synthesize(query: string, findings: string[], citations: Citation[]): Promise<Omit<ResearchReport, "metadata">> {
     const response = await withRetry(() => this.ai.models.generateContent({
       model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
       
       CRITICAL: Detect the language of the research query and respond ENTIRELY in that language.
       The summary, detailed analysis, and conclusion must all be in the detected language.
@@ -54,6 +57,8 @@ export class Synthesizer {
 
       ### Output:
       Provide the report in the specified JSON format.`,
+        }],
+      }],
       config: {
         responseMimeType: "application/json",
         responseSchema: {

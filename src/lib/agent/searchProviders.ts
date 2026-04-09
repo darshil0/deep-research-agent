@@ -70,9 +70,14 @@ export class GoogleSearchProvider implements SearchProvider {
 
     const response = await withRetry(() => this.ai.models.generateContent({
       model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: `Search Query: ${combinedQuery}\nContext: ${context}\n\nPlease find relevant high-quality sources.`,
+      contents: [{
+        role: "user",
+        parts: [{
+          text: `Search Query: ${combinedQuery}\nContext: ${context}\n\nPlease find relevant high-quality sources.`,
+        }],
+      }],
       config: {
-        tools: [{ googleSearch: {} }],
+        tools: [{ googleSearch: {} }] as any,
       },
     }));
 

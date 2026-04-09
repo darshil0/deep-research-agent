@@ -4,9 +4,7 @@ import { Analyzer } from "../analyzer.ts";
 describe("Analyzer", () => {
     it("should analyze source content and return findings", async () => {
       const mockGenerateContent = vi.fn().mockResolvedValue({
-        response: {
-          candidates: [{ content: { parts: [{ text: "Finding 1\nFinding 2" }] } }]
-        }
+        text: "Finding 1\nFinding 2"
       });
   
       const mockAi = { models: { generateContent: mockGenerateContent } } as any;
@@ -19,9 +17,7 @@ describe("Analyzer", () => {
   
     it("should check completeness of findings", async () => {
       const mockGenerateContent = vi.fn().mockResolvedValue({
-        response: {
-          candidates: [{ content: { parts: [{ text: JSON.stringify({ isComplete: true }) }] } }]
-        }
+        text: JSON.stringify(true)
       });
   
       const mockAi = { models: { generateContent: mockGenerateContent } } as any;
