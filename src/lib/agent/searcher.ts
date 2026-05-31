@@ -48,7 +48,7 @@ export class Searcher {
         const $ = cheerio.load(response.data);
         $("script, style, nav, footer, header, aside, iframe, noscript").remove();
         
-        const text = $("article, main, .content, .post, .entry").text() || $("body").text();
+        const text = $("article, main, [role='main'], #main-content, .main-content, .content, .post, .entry, section").text() || $("body").text();
         
         return text
           .replace(/\s+/g, " ")
