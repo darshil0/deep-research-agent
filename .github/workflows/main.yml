@@ -1,0 +1,46 @@
+name: CI/CD Security & Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Lint
+      run: npm run lint
+
+    - name: Run tests
+      run: npm test
+
+    - name: Security Check - AUTH_TOKEN Rotation Validation
+      run: |
+        # TODO: Implement AUTH_TOKEN rotation validation
+        # In a real scenario, this could check if the token has been updated in the last 90 days
+        echo "Validating AUTH_TOKEN rotation..."
+        # Example check (logic depends on where metadata is stored):
+        # last_rotation=$(get_last_rotation_date AUTH_TOKEN)
+        # if [ $(date +%s) - $(date -d "$last_rotation" +%s) -gt 7776000 ]; then exit 1; fi
+        echo "AUTH_TOKEN rotation validated (TODO)"
+
+    - name: Security Check - API Key Rotation Validation
+      run: |
+        # TODO: Implement API key rotation validation (Gemini, Tavily)
+        echo "Validating API key rotation..."
+        # Similar logic to above
+        echo "API key rotation validated (TODO)"

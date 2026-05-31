@@ -37,11 +37,24 @@ async function startServer() {
   const PORT = 3000;
 
   // Authentication Middleware
+  // TODO: Implement proper SessionManager to track expiry per token/session.
+  // Currently, authStartTime is server-wide for demonstration of the expiry pattern.
+  const authStartTime = Date.now();
   const authMiddleware = (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const token = req.headers["authorization"] || req.query.token;
+
     if (process.env.AUTH_TOKEN && token !== process.env.AUTH_TOKEN) {
       return res.status(401).json({ error: "Unauthorized: Invalid or missing AUTH_TOKEN" });
     }
+
+    // Token Expiry Logic
+    if (process.env.TOKEN_EXPIRY_SECONDS) {
+      const expiryMs = parseInt(process.env.TOKEN_EXPIRY_SECONDS) * 1000;
+      if (Date.now() - authStartTime > expiryMs) {
+        return res.status(401).json({ error: "Unauthorized: Token has expired" });
+      }
+    }
+
     next();
   };
 
@@ -185,6 +198,16 @@ async function startServer() {
       ws.send(JSON.stringify({ type: "error", message: "Unauthorized" }));
       ws.close(1008, "Unauthorized");
       return;
+    }
+
+    // Token Expiry Logic for WebSocket
+    if (process.env.TOKEN_EXPIRY_SECONDS) {
+      const expiryMs = parseInt(process.env.TOKEN_EXPIRY_SECONDS) * 1000;
+      if (Date.now() - authStartTime > expiryMs) {
+        ws.send(JSON.stringify({ type: "error", message: "Token has expired" }));
+        ws.close(1008, "Token has expired");
+        return;
+      }
     }
 
     if (taskId) {

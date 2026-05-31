@@ -4,11 +4,13 @@ import { Citation, SearchFilters } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
 
 export interface SearchProvider {
+  name: string;
   search(query: string, context: string, filters?: SearchFilters): Promise<Citation[]>;
 }
 
 export class TavilySearchProvider implements SearchProvider {
   private tvly: any;
+  name = "Tavily";
 
   constructor() {
     if (process.env.TAVILY_API_KEY) {
@@ -52,6 +54,7 @@ export class TavilySearchProvider implements SearchProvider {
 
 export class GoogleSearchProvider implements SearchProvider {
   private ai: GoogleGenAI;
+  name = "Google";
 
   constructor(ai: GoogleGenAI) {
     this.ai = ai;
@@ -104,6 +107,7 @@ export class GoogleSearchProvider implements SearchProvider {
 
 export class HybridSearchProvider implements SearchProvider {
   private providers: SearchProvider[];
+  name = "Hybrid";
 
   constructor(providers: SearchProvider[]) {
     this.providers = providers;

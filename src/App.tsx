@@ -7,6 +7,7 @@ import { toast, Toaster } from "sonner";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { getReconnectionDelay } from "./lib/utils/reconnection.ts";
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -36,9 +37,11 @@ export default function App() {
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem("authToken"));
   const [showAuthModal, setShowAuthModal] = useState(!localStorage.getItem("authToken"));
   const [tempToken, setTempToken] = useState("");
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Restore task from localStorage and load history
   useEffect(() => {
@@ -122,15 +125,28 @@ export default function App() {
   }, {});
 
   useEffect(() => {
-    if (taskId) {
+    let isMounted = true;
+
+    const connectWebSocket = () => {
+      if (!taskId) return;
+
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = new URL(`${protocol}//${window.location.host}`);
       wsUrl.searchParams.set("taskId", taskId);
       if (authToken) wsUrl.searchParams.set("token", authToken);
+
       const ws = new WebSocket(wsUrl.toString());
       wsRef.current = ws;
 
+      ws.onopen = () => {
+        if (isMounted) {
+          setReconnectAttempts(0);
+          console.log("WebSocket connected");
+        }
+      };
+
       ws.onmessage = (event) => {
+        if (!isMounted) return;
         const update: ResearchState = JSON.parse(event.data);
         setState(update);
         if (update.status === "completed" || update.status === "failed") {
@@ -140,15 +156,48 @@ export default function App() {
       };
 
       ws.onerror = () => {
-        toast.error("WebSocket connection failed.");
-        setIsResearching(false);
+        if (isMounted) {
+          console.error("WebSocket error occurred");
+        }
       };
 
-      return () => {
-        ws.close();
+      ws.onclose = (event) => {
+        if (!isMounted) return;
+
+        // Don't reconnect if it was a normal closure or if research is finished
+        const isFinished = state?.status === "completed" || state?.status === "failed";
+        if (event.code === 1000 || event.code === 1008 || isFinished) {
+          setIsResearching(false);
+          return;
+        }
+
+        // Exponential backoff reconnection
+        const maxAttempts = 5;
+        if (reconnectAttempts < maxAttempts) {
+          const delay = getReconnectionDelay(reconnectAttempts);
+          console.log(`WebSocket closed. Reconnecting in ${delay}ms... (Attempt ${reconnectAttempts + 1}/${maxAttempts})`);
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            setReconnectAttempts(prev => prev + 1);
+            connectWebSocket();
+          }, delay);
+        } else {
+          toast.error("WebSocket connection lost. Please refresh the page.");
+          setIsResearching(false);
+        }
       };
+    };
+
+    if (taskId) {
+      connectWebSocket();
     }
-  }, [taskId]);
+
+    return () => {
+      isMounted = false;
+      if (wsRef.current) wsRef.current.close();
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
+    };
+  }, [taskId, reconnectAttempts]);
 
   useEffect(() => {
     if (scrollRef.current) {

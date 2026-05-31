@@ -5,6 +5,7 @@ import { Citation, SearchFilters, SearchProviderType } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
 import { ContentCache } from "../utils/cache.ts";
 import { SearchProvider, TavilySearchProvider, GoogleSearchProvider, HybridSearchProvider } from "./searchProviders.ts";
+import { CircuitBreakerSearchProvider } from "./circuitBreaker.ts";
 
 export class Searcher {
   private ai: GoogleGenAI;
@@ -17,17 +18,17 @@ export class Searcher {
     
     switch (providerType) {
       case "google":
-        this.provider = new GoogleSearchProvider(ai);
+        this.provider = new CircuitBreakerSearchProvider(new GoogleSearchProvider(ai));
         break;
       case "hybrid":
         this.provider = new HybridSearchProvider([
-          new TavilySearchProvider(),
-          new GoogleSearchProvider(ai)
+          new CircuitBreakerSearchProvider(new TavilySearchProvider()),
+          new CircuitBreakerSearchProvider(new GoogleSearchProvider(ai))
         ]);
         break;
       case "tavily":
       default:
-        this.provider = new TavilySearchProvider();
+        this.provider = new CircuitBreakerSearchProvider(new TavilySearchProvider());
         break;
     }
   }
