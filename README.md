@@ -873,14 +873,6 @@ LOG_LEVEL=debug ENABLE_PERFORMANCE_LOGGING=true npm run dev
 
 For detailed version history, see [Changelog.md](./Changelog.md) in the repository root.
 
-**Recent Changes (v1.8.0)**:
-- Fixed hardcoded file path issue in documentation
-- Added comprehensive error handling & recovery strategies
-- Implemented circuit breaker pattern for provider failures
-- Added cost estimation & tracking per research task
-- Enhanced WebSocket reconnection with exponential backoff
-- Added production deployment guides (Docker, AWS, GCP, Azure)
-- Improved security documentation & token lifecycle management
 
 ---
 
