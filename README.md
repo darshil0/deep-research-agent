@@ -123,6 +123,6 @@ npm run preview   # Preview production build
 MIT License - see [LICENSE](LICENSE) for details.
 
 ---
-**Version**: 1.7.0  
+**Version**: 1.7.2
 **Status**: Feature Complete ✅  
-**Last Updated**: April 4, 2026
+**Last Updated**: April 10, 2026

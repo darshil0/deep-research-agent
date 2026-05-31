@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [1.7.2] - 2026-04-10
+
+### Added
+- **Robust JSON Parsing Utility**: Introduced `parseAIJson` in `src/lib/utils/ai.ts` to reliably extract and parse JSON from AI responses, handling markdown code blocks and conversational filler.
+
+### Improved
+- **Dependency Maintenance**: Updated core libraries including `axios`, `vite`, `ws`, `react`, and `typescript` to their latest stable versions to address vulnerabilities and improve performance.
+- **Web Content Extraction**: Enhanced `Searcher` logic with a broader range of CSS selectors (`[role='main']`, `#main-content`, `section`, etc.) to improve research accuracy across diverse modern web layouts.
+- **Agent Prompting**: Refined the `Synthesizer` prompt to strictly enforce JSON-only responses, reducing parsing errors caused by conversational model outputs.
+- **Error Observability**: Updated `ResearchOrchestrator` to provide more detailed error context (including source URLs) when iterative analysis steps fail.
+
 ## [1.7.1] - 2026-04-09
 
 ### Fixed

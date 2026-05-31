@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { withRetry } from "../utils/retry.ts";
+import { parseAIJson } from "../utils/ai.ts";
 
 export class Planner {
   private ai: GoogleGenAI;
@@ -53,7 +54,7 @@ export class Planner {
     }));
 
     try {
-      const plan = JSON.parse(response.text || "[]");
+      const plan = parseAIJson<string[]>(response.text || "[]");
       return plan;
     } catch (err) {
       console.error("Failed to parse planner response:", response.text);

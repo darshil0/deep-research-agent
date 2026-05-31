@@ -138,7 +138,7 @@ export class ResearchOrchestrator {
           allFindings.push(findings);
           allCitations.push(source);
         } catch (err) {
-          console.error(`Failed to analyze ${source.url}:`, err);
+          console.error(`Failed to analyze ${source.url}:`, err instanceof Error ? err.message : err);
         }
       }
       this.completeStep(analysisId, "completed", `Analyzed ${contents.length} sources.`);

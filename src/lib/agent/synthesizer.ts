@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Citation, ResearchReport } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
+import { parseAIJson } from "../utils/ai.ts";
 
 export class Synthesizer {
   private ai: GoogleGenAI;
@@ -18,6 +19,7 @@ export class Synthesizer {
           text: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
       
       CRITICAL: Detect the language of the research query and respond ENTIRELY in that language.
+      CRITICAL: Your entire response MUST be a single valid JSON object. DO NOT include any introductory or concluding conversational filler.
       The summary, detailed analysis, and conclusion must all be in the detected language.
 
       ### Report Structure:
@@ -87,7 +89,7 @@ export class Synthesizer {
     }));
 
     try {
-      const report = JSON.parse(response.text || "{}");
+      const report = parseAIJson<Omit<ResearchReport, "metadata">>(response.text || "{}");
       return report;
     } catch (err) {
       console.error("Failed to parse synthesizer response:", response.text);

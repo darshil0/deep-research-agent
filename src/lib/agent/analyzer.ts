@@ -1,5 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { withRetry } from "../utils/retry.ts";
+import { parseAIJson } from "../utils/ai.ts";
 
 export class Analyzer {
   private ai: GoogleGenAI;
@@ -66,7 +67,7 @@ export class Analyzer {
     }));
 
     try {
-      const isComplete = JSON.parse(response.text || "false");
+      const isComplete = parseAIJson<boolean>(response.text || "false");
       return isComplete;
     } catch (err) {
       return false;
