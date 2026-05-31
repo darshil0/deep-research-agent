@@ -2,7 +2,7 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
-## [1.7.2] - 2026-04-10
+## [1.7.2] - 2026-05-31
 
 ### Added
 - **Robust JSON Parsing Utility**: Introduced `parseAIJson` in `src/lib/utils/ai.ts` to reliably extract and parse JSON from AI responses, handling markdown code blocks and conversational filler.
@@ -13,7 +13,7 @@ All notable changes to the Deep Research Agent project will be documented in thi
 - **Agent Prompting**: Refined the `Synthesizer` prompt to strictly enforce JSON-only responses, reducing parsing errors caused by conversational model outputs.
 - **Error Observability**: Updated `ResearchOrchestrator` to provide more detailed error context (including source URLs) when iterative analysis steps fail.
 
-## [1.7.1] - 2026-04-09
+## [1.7.1] - 2026-05-31
 
 ### Fixed
 - **Google GenAI API Integration**: Corrected the SDK usage pattern in `Planner`, `Analyzer`, `Synthesizer`, and `SearchProvider` to match the `@google/genai` version 1.48.0. Standardized on `this.ai.models.generateContent` with the expected parameter structure.
