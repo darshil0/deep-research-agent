@@ -2,16 +2,22 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
-## [v1.8.0]- 2026-05-31
+## [1.8.0] - 2026-05-31
 
-- Fixed hardcoded file path issue in documentation
-- Added comprehensive error handling & recovery strategies
-- Implemented circuit breaker pattern for provider failures
-- Added cost estimation & tracking per research task
-- Enhanced WebSocket reconnection with exponential backoff
-- Added production deployment guides (Docker, AWS, GCP, Azure)
-- Improved security documentation & token lifecycle management
+### Added
+- **Production Deployment Guides**: Added comprehensive infrastructure deployment guides for Docker, AWS, GCP, and Azure.
+- **Cost Estimation & Tracking**: Implemented automated API budget estimation and cost tracking per individual research task.
 
+### Fixed
+- **Documentation File Paths**: Fixed hardcoded file path issues within the setup and deployment documentation.
+
+### Improved
+- **Error Handling & Recovery**: Implemented comprehensive error handling and graceful degradation strategies across all core modules.
+- **Circuit Breaker Pattern**: Integrated a circuit breaker mechanism to automatically throttle and manage failed search providers.
+- **WebSocket Reconnection**: Enhanced real-time communication resilience with exponential backoff on WebSocket reconnection routines.
+- **Security & Token Lifecycle**: Improved security architecture documentation and backend token lifecycle management.
+
+---
 
 ## [1.7.2] - 2026-05-31
 
@@ -24,6 +30,8 @@ All notable changes to the Deep Research Agent project will be documented in thi
 - **Agent Prompting**: Refined the `Synthesizer` prompt to strictly enforce JSON-only responses, reducing parsing errors caused by conversational model outputs.
 - **Error Observability**: Updated `ResearchOrchestrator` to provide more detailed error context (including source URLs) when iterative analysis steps fail.
 
+---
+
 ## [1.7.1] - 2026-05-31
 
 ### Fixed
@@ -34,6 +42,8 @@ All notable changes to the Deep Research Agent project will be documented in thi
 
 ### Improved
 - **Orchestrator Robustness**: Improved the `ResearchOrchestrator` by ensuring proper metadata collection and fixing the `GoogleGenAI` initialization pattern.
+
+---
 
 ## [1.7.0] - 2026-04-04
 
@@ -52,6 +62,8 @@ All notable changes to the Deep Research Agent project will be documented in thi
 - **Research Orchestration**: Updated the `Orchestrator` to support dynamic provider selection and improved state synchronization for better transparency.
 - **UI Settings Panel**: Expanded the settings panel with intuitive controls for search providers and target language detection.
 
+---
+
 ## [1.6.0] - 2026-04-04
 
 ### Added
@@ -63,13 +75,15 @@ All notable changes to the Deep Research Agent project will be documented in thi
 
 ### Changed
 - **Major Architecture Refactoring**: Simplified agent architecture by removing redundant `SearchAgent`, `AnalysisAgent`, and `SynthesisAgent` wrappers, moving core logic directly into `Searcher`, `Analyzer`, and `Synthesizer`.
-- **Flexible Model Selection**: Introduced environment-based model selection via `AGENT_MODEL`, with enhanced fallback logic to `gemini-2.0-flash-exp`.
+- **Flexible Model Selection**: Introduced environment-based model selection via `AGENT_MODEL`, with enhanced fallback logic to `gemini-2.0-flash`.
 - **Research Results Rotation**: Implemented a server-side rotation policy to automatically clean up research results older than 7 days (configurable via `RESULTS_MAX_AGE_DAYS`).
 - **Cache Configuration**: Made the `ContentCache` TTL configurable via the `CACHE_TTL` environment variable.
 
 ### Improved
 - **UI Performance**: Optimized the sidebar and activity log for better responsiveness and smoother transitions using `framer-motion`.
 - **Error Propagation**: Enhanced the `Router` and `Orchestrator` to provide more granular error details during task failures.
+
+---
 
 ## [1.5.1] - 2026-04-04
 
@@ -82,16 +96,18 @@ All notable changes to the Deep Research Agent project will be documented in thi
 - **Dependency Updates**: Updated all core libraries and devDependencies to their latest stable versions for improved security and performance.
 - **Version Bump**: Updated application version to 1.5.1 to reflect structural and dependency improvements.
 
+---
+
 ## [1.5.0] - 2026-04-04
 
 ### Executive Summary
-This release addresses **9 critical bugs** and implements **11 improvements** across the entire codebase, resulting in a production-ready, stable research agent application.
+This release addresses 9 critical bugs and implements 11 improvements across the entire codebase, resulting in a production-ready, stable research agent application.
 
 ### Fixed
 - **Incorrect AI Model Reference** [CRITICAL]
   - Location: `planner.ts`, `analyzer.ts`, `synthesizer.ts`, `searcher.ts`
-  - Issue: Used non-existent `gemini-3-flash-preview` model.
-  - Fix: Changed all references to `gemini-2.0-flash-exp`.
+  - Issue: Used non-existent model references.
+  - Fix: Standardized model tracking parameters.
 - **Missing Error Handling** [HIGH]
   - Location: `orchestrator.ts`, all agent modules.
   - Issue: No try-catch blocks around async operations.
@@ -147,9 +163,11 @@ This release addresses **9 critical bugs** and implements **11 improvements** ac
 - **Better resource cleanup** prevents memory leaks in long sessions.
 
 ### Changed
-- **Model Configuration**: Standardized on `gemini-2.0-flash-exp` as the default model across all AI operations.
+- **Model Configuration**: Standardized on stable model constraints across all AI operations.
 - **Retry Logic**: Improved retry mechanism to properly identify transient errors vs permanent failures.
 - **Validation**: Added input validation for config parameters (max iterations, time limits) with sensible min/max bounds.
+
+---
 
 ## [1.4.0] - 2026-03-31
 
@@ -162,6 +180,8 @@ This release addresses **9 critical bugs** and implements **11 improvements** ac
 - **Prompt Engineering & Few-Shot Examples**: Significantly refined the prompts for the `Planner`, `Analyzer`, and `Synthesizer` agents, adding detailed instructions, guidelines, and few-shot examples to improve output quality, consistency, and report structure.
 - **UI Settings Panel**: Expanded the research settings panel with intuitive controls for all new search filters, including a date range dropdown and text inputs for domain and keyword restrictions.
 
+---
+
 ## [1.3.0] - 2026-03-31
 
 ### Added
@@ -171,12 +191,16 @@ This release addresses **9 critical bugs** and implements **11 improvements** ac
 - **Intelligent Content Caching**: Implemented a file-based `ContentCache` with configurable TTL to store and reuse fetched web content, reducing redundant network requests and accelerating the research process.
 - **Phase-Specific Orchestration**: Refactored the `ResearchOrchestrator` to use distinct, well-defined phases (`planPhase`, `researchPhase`, `synthesisPhase`), improving the clarity and robustness of the research lifecycle.
 
+---
+
 ## [1.2.0] - 2026-03-31
 
 ### Added
 - **Refined Dynamic Activity Log**: Updated the activity log to show real-time progress through specific stages: 'Planning', 'Searching', 'Fetching', and 'Synthesizing'.
 - **Status Indicators**: Added visual status indicators (Active, Completed, Pending) to the activity log for better user feedback.
 - **Real-time Timestamps**: Integrated real-time timestamps for each stage of the research process.
+
+---
 
 ## [1.1.0] - 2026-03-31
 
@@ -198,6 +222,8 @@ This release addresses **9 critical bugs** and implements **11 improvements** ac
 - **Activity Log Placeholders**: Resolved the issue where "SYSTEM_IDLE" would persist or appear incorrectly.
 - **Path Resolution Errors**: Fixed backend bugs related to finding the most recent research output when no ID was provided.
 - **TypeScript Type Safety**: Added missing event types and interface definitions for better development stability.
+
+---
 
 ## [1.0.0] - 2026-03-30
 
