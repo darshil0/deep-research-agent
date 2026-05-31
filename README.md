@@ -125,4 +125,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 ---
 **Version**: 1.7.2
 **Status**: Feature Complete ✅  
-**Last Updated**: April 10, 2026
+**Last Updated**: May 31, 2026
