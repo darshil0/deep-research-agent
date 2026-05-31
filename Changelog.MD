@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [v1.8.0]- 2026-05-31
+
+- Fixed hardcoded file path issue in documentation
+- Added comprehensive error handling & recovery strategies
+- Implemented circuit breaker pattern for provider failures
+- Added cost estimation & tracking per research task
+- Enhanced WebSocket reconnection with exponential backoff
+- Added production deployment guides (Docker, AWS, GCP, Azure)
+- Improved security documentation & token lifecycle management
+
+
 ## [1.7.2] - 2026-05-31
 
 ### Added
