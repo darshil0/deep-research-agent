@@ -91,7 +91,7 @@ export class GoogleSearchProvider implements SearchProvider {
     );
 
     const citations: Citation[] = [];
-    const groundingChunks = (response as any).candidates?.[0]?.groundingMetadata?.groundingChunks;
+    const groundingChunks = response.response.candidates?.[0]?.groundingMetadata?.groundingChunks;
 
     if (groundingChunks) {
       for (const chunk of groundingChunks) {

@@ -13,7 +13,7 @@ All notable changes to the Deep Research Agent project will be documented in thi
 ### Changed
 
 - **Major SDK Migration**: Upgraded to the latest `@google/generative-ai` SDK (v0.24.1). Refactored all agent modules (`Planner`, `Analyzer`, `Synthesizer`, `SearchProviders`) to use the new unified `getGenerativeModel()` API and `SchemaType` enums.
-- **Dependency Refresh**: Updated all core dependencies and devDependencies to their latest stable versions, including `react` (v19.0.0), `vite` (v6.2.0), `vitest` (v4.1.9), and `typescript` (v5.8.3).
+- **Dependency Refresh**: Updated all core dependencies and devDependencies to their latest stable versions, including `react` (v19.2.7), `vite` (v6.0.11), `vitest` (v3.0.7), and `typescript` (v5.7.3).
 - **Test Suite Modernization**: Updated all unit tests to mock the new Google Generative AI SDK structures, ensuring a green test suite.
 
 ### Fixed
