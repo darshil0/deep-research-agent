@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { tavily } from "@tavily/core";
 import { Citation, SearchFilters } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
@@ -40,7 +40,7 @@ export class TavilySearchProvider implements SearchProvider {
     }
 
     const searchContext = `${query}\nContext: ${context}`;
-    const response = await withRetry(() => this.tvly.search(searchContext, tavilyOptions)) as any;
+    const response = (await withRetry(() => this.tvly.search(searchContext, tavilyOptions))) as any;
 
     return response.results.map((r: any) => ({
       id: Math.random().toString(36).substring(7),
@@ -53,10 +53,10 @@ export class TavilySearchProvider implements SearchProvider {
 }
 
 export class GoogleSearchProvider implements SearchProvider {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
   name = "Google";
 
-  constructor(ai: GoogleGenAI) {
+  constructor(ai: GoogleGenerativeAI) {
     this.ai = ai;
   }
 
@@ -71,22 +71,28 @@ export class GoogleSearchProvider implements SearchProvider {
       }
     }
 
-    const response = await withRetry(() => this.ai.models.generateContent({
-      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Search Query: ${combinedQuery}\nContext: ${context}\n\nPlease find relevant high-quality sources.`,
-        }],
-      }],
-      config: {
-        tools: [{ googleSearch: {} }] as any,
-      },
-    }));
+    const response = await withRetry(() =>
+      this.ai
+        .getGenerativeModel({ model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp" })
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Search Query: ${combinedQuery}\nContext: ${context}\n\nPlease find relevant high-quality sources.`,
+                },
+              ],
+            },
+          ],
+          tools: [{ googleSearch: {} }] as any,
+          generationConfig: {},
+        }),
+    );
 
     const citations: Citation[] = [];
     const groundingChunks = (response as any).candidates?.[0]?.groundingMetadata?.groundingChunks;
-    
+
     if (groundingChunks) {
       for (const chunk of groundingChunks) {
         if (chunk.web) {
@@ -114,11 +120,15 @@ export class HybridSearchProvider implements SearchProvider {
   }
 
   async search(query: string, context: string, filters?: SearchFilters): Promise<Citation[]> {
-    const results = await Promise.all(this.providers.map(p => p.search(query, context, filters).catch(e => {
-      console.error("Provider search failed:", e);
-      return [];
-    })));
-    
+    const results = await Promise.all(
+      this.providers.map((p) =>
+        p.search(query, context, filters).catch((e) => {
+          console.error("Provider search failed:", e);
+          return [];
+        }),
+      ),
+    );
+
     // Merge and deduplicate by URL
     const merged = new Map<string, Citation>();
     for (const providerResults of results) {
@@ -128,7 +138,7 @@ export class HybridSearchProvider implements SearchProvider {
         }
       }
     }
-    
+
     return Array.from(merged.values());
   }
 }

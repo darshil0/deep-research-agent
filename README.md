@@ -2,7 +2,7 @@
 
 An autonomous, iterative research agent built with TypeScript/React, powered by Google's Gemini 2.0 Flash model. This production-ready platform performs deep web research, extracts evidence, and synthesizes comprehensive reports with citations.
 
-**Current Version**: 1.8.0 | **Status**: Production Ready ✅ | **Last Updated**: May 31, 2026
+**Current Version**: 1.9.0 | **Status**: Production Ready ✅ | **Last Updated**: June 15, 2026
 
 ---
 
@@ -59,17 +59,20 @@ An autonomous, iterative research agent built with TypeScript/React, powered by 
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/your-org/deep-research-agent.git
    cd deep-research-agent
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```
 
 3. Create a `.env` file in the project root. Use `.env.example` as a template:
+
    ```bash
    cp .env.example .env
    ```
@@ -77,11 +80,20 @@ An autonomous, iterative research agent built with TypeScript/React, powered by 
 4. Configure your environment variables in `.env` (see [Environment Variables](#environment-variables) section below)
 
 5. Start the development server:
+
    ```bash
    npm run dev
    ```
 
 6. Access the application at `http://localhost:3000`
+
+### Scripts
+
+- `npm run dev`: Start development server
+- `npm run build`: Build for production
+- `npm run format`: Format codebase with Prettier
+- `npm run lint`: Run ESLint and TypeScript checks
+- `npm test`: Run unit tests with Vitest
 
 ### `.env.example` Template
 

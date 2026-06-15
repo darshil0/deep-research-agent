@@ -1,21 +1,26 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import { Citation, SearchFilters, SearchProviderType } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
 import { ContentCache } from "../utils/cache.ts";
-import { SearchProvider, TavilySearchProvider, GoogleSearchProvider, HybridSearchProvider } from "./searchProviders.ts";
+import {
+  SearchProvider,
+  TavilySearchProvider,
+  GoogleSearchProvider,
+  HybridSearchProvider,
+} from "./searchProviders.ts";
 import { CircuitBreakerSearchProvider } from "./circuitBreaker.ts";
 
 export class Searcher {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
   private provider: SearchProvider;
   private cache: ContentCache;
 
-  constructor(ai: GoogleGenAI, providerType: SearchProviderType = "tavily") {
+  constructor(ai: GoogleGenerativeAI, providerType: SearchProviderType = "tavily") {
     this.ai = ai;
     this.cache = new ContentCache(24 * 60 * 60 * 1000);
-    
+
     switch (providerType) {
       case "google":
         this.provider = new CircuitBreakerSearchProvider(new GoogleSearchProvider(ai));
@@ -23,7 +28,7 @@ export class Searcher {
       case "hybrid":
         this.provider = new HybridSearchProvider([
           new CircuitBreakerSearchProvider(new TavilySearchProvider()),
-          new CircuitBreakerSearchProvider(new GoogleSearchProvider(ai))
+          new CircuitBreakerSearchProvider(new GoogleSearchProvider(ai)),
         ]);
         break;
       case "tavily":
@@ -42,20 +47,20 @@ export class Searcher {
         const response = await axios.get(url, {
           timeout: 10000,
           headers: {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
           },
         });
 
         const $ = cheerio.load(response.data);
         $("script, style, nav, footer, header, aside, iframe, noscript").remove();
-        
-        const text = $("article, main, [role='main'], #main-content, .main-content, .content, .post, .entry, section").text() || $("body").text();
-        
-        return text
-          .replace(/\s+/g, " ")
-          .replace(/\n+/g, "\n")
-          .trim()
-          .substring(0, 10000);
+
+        const text =
+          $(
+            "article, main, [role='main'], #main-content, .main-content, .content, .post, .entry, section",
+          ).text() || $("body").text();
+
+        return text.replace(/\s+/g, " ").replace(/\n+/g, "\n").trim().substring(0, 10000);
       }, 2);
 
       if (content) {
@@ -68,7 +73,12 @@ export class Searcher {
     }
   }
 
-  async searchAndFetch(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<{ sources: Citation[]; contents: { source: Citation; content: string }[] }> {
+  async searchAndFetch(
+    query: string,
+    plan: string[],
+    previousFindings: string[],
+    filters?: SearchFilters,
+  ): Promise<{ sources: Citation[]; contents: { source: Citation; content: string }[] }> {
     const searchResults = await this.search(query, plan, previousFindings, filters);
     const topSources = searchResults.slice(0, 3);
     const contents: { source: Citation; content: string }[] = [];
@@ -87,7 +97,12 @@ export class Searcher {
     return { sources: searchResults, contents };
   }
 
-  async search(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters): Promise<Citation[]> {
+  async search(
+    query: string,
+    plan: string[],
+    previousFindings: string[],
+    filters?: SearchFilters,
+  ): Promise<Citation[]> {
     const searchContext = previousFindings.slice(-3).join("\n");
     return await this.provider.search(query, searchContext, filters);
   }

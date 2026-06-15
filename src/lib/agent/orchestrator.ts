@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ResearchConfig, ResearchState, ResearchStep, ResearchReport, Citation } from "./types.ts";
 import { Router } from "./router.ts";
 import fs from "fs/promises";
@@ -9,7 +9,7 @@ export class ResearchOrchestrator {
   private config: ResearchConfig;
   private onUpdate: (state: ResearchState) => void;
   private state: ResearchState;
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
   private taskId: string;
   private router: Router;
 
@@ -22,13 +22,15 @@ export class ResearchOrchestrator {
       status: "idle",
       steps: [],
     };
-    
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY is not set. Please provide a valid API key in the environment variables.");
+      throw new Error(
+        "GEMINI_API_KEY is not set. Please provide a valid API key in the environment variables.",
+      );
     }
-    
-    this.ai = new GoogleGenAI({ apiKey });
+
+    this.ai = new GoogleGenerativeAI(apiKey);
     this.router = new Router(this.ai, config.provider);
   }
 
@@ -38,7 +40,7 @@ export class ResearchOrchestrator {
       await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(
         path.join(dir, `${this.taskId}.json`),
-        JSON.stringify(this.state, null, 2)
+        JSON.stringify(this.state, null, 2),
       );
     } catch (err) {
       console.error("Failed to persist research state:", err);
@@ -91,7 +93,6 @@ export class ResearchOrchestrator {
 
       // 3. Synthesis Phase
       await this.synthesisPhase(allFindings, allCitations, startTime);
-
     } catch (err: any) {
       this.updateState({ status: "failed", error: err.message });
       throw err;
@@ -105,7 +106,10 @@ export class ResearchOrchestrator {
     return plan;
   }
 
-  private async researchPhase(plan: string[], startTime: number): Promise<{ allFindings: string[], allCitations: Citation[] }> {
+  private async researchPhase(
+    plan: string[],
+    startTime: number,
+  ): Promise<{ allFindings: string[]; allCitations: Citation[] }> {
     let allCitations: Citation[] = [];
     let allFindings: string[] = [];
     let iterations = 0;
@@ -119,26 +123,45 @@ export class ResearchOrchestrator {
       }
 
       this.updateState({ status: "searching" });
-      const searchId = this.addStep("searching", `Iteration ${iterations}: Searching for information...`);
-      
+      const searchId = this.addStep(
+        "searching",
+        `Iteration ${iterations}: Searching for information...`,
+      );
+
       // Context Pruning: Only pass the most recent findings to the searcher
       const recentFindings = allFindings.slice(-5);
-      const { sources, contents } = await this.router.searchAndFetch(this.query, plan, recentFindings, this.config.filters);
-      this.completeStep(searchId, "completed", `Found ${sources.length} relevant sources.`, sources);
+      const { sources, contents } = await this.router.searchAndFetch(
+        this.query,
+        plan,
+        recentFindings,
+        this.config.filters,
+      );
+      this.completeStep(
+        searchId,
+        "completed",
+        `Found ${sources.length} relevant sources.`,
+        sources,
+      );
 
       // Analysis
       this.updateState({ status: "fetching" });
-      const analysisId = this.addStep("fetching", `Iteration ${iterations}: Analyzing content for top sources...`);
+      const analysisId = this.addStep(
+        "fetching",
+        `Iteration ${iterations}: Analyzing content for top sources...`,
+      );
 
       for (const { source, content } of contents) {
-        if (allCitations.some(c => c.url === source.url)) continue; // Skip duplicates
+        if (allCitations.some((c) => c.url === source.url)) continue; // Skip duplicates
 
         try {
           const findings = await this.router.analyze(content, this.query, source.title);
           allFindings.push(findings);
           allCitations.push(source);
         } catch (err) {
-          console.error(`Failed to analyze ${source.url}:`, err instanceof Error ? err.message : err);
+          console.error(
+            `Failed to analyze ${source.url}:`,
+            err instanceof Error ? err.message : err,
+          );
         }
       }
       this.completeStep(analysisId, "completed", `Analyzed ${contents.length} sources.`);
@@ -158,7 +181,7 @@ export class ResearchOrchestrator {
     this.updateState({ status: "synthesizing" });
     const synthId = this.addStep("synthesizing", "Synthesizing final report with citations...");
     const report = await this.router.synthesize(this.query, allFindings, allCitations);
-    
+
     const totalTime = (Date.now() - startTime) / 1000;
     const finalReport: ResearchReport = {
       ...report,

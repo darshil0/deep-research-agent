@@ -8,7 +8,7 @@ export interface SearchProvider {
 export class CircuitBreaker {
   private failureCount: number = 0;
   private lastFailureTime: number = 0;
-  private state: 'CLOSED' | 'OPEN' | 'HALF_OPEN' = 'CLOSED';
+  private state: "CLOSED" | "OPEN" | "HALF_OPEN" = "CLOSED";
   private readonly threshold: number = 3;
   private readonly cooldown: number = 5 * 60 * 1000; // 5 minutes
 
@@ -18,9 +18,9 @@ export class CircuitBreaker {
   }
 
   async execute<T>(fn: () => Promise<T>): Promise<T> {
-    if (this.state === 'OPEN') {
+    if (this.state === "OPEN") {
       if (Date.now() - this.lastFailureTime > this.cooldown) {
-        this.state = 'HALF_OPEN';
+        this.state = "HALF_OPEN";
       } else {
         throw new Error(`Circuit breaker is OPEN for this provider`);
       }
@@ -38,23 +38,23 @@ export class CircuitBreaker {
 
   private onSuccess() {
     this.failureCount = 0;
-    this.state = 'CLOSED';
+    this.state = "CLOSED";
   }
 
   private onFailure() {
     this.failureCount++;
     this.lastFailureTime = Date.now();
     if (this.failureCount >= this.threshold) {
-      this.state = 'OPEN';
+      this.state = "OPEN";
       console.warn(`Circuit breaker activated: Provider disabled for ${this.cooldown / 1000}s`);
     }
   }
 
   isOpen(): boolean {
-    if (this.state === 'OPEN' && Date.now() - this.lastFailureTime > this.cooldown) {
+    if (this.state === "OPEN" && Date.now() - this.lastFailureTime > this.cooldown) {
       return false; // Technically half-open but practically available
     }
-    return this.state === 'OPEN';
+    return this.state === "OPEN";
   }
 }
 
@@ -67,7 +67,9 @@ export class CircuitBreakerSearchProvider implements SearchProvider {
     this.breaker = new CircuitBreaker();
   }
 
-  get name() { return this.provider.name; }
+  get name() {
+    return this.provider.name;
+  }
 
   async search(query: string, context: string, filters?: SearchFilters): Promise<Citation[]> {
     return await this.breaker.execute(() => this.provider.search(query, context, filters));

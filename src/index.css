@@ -2,34 +2,38 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --font-mono: 'JetBrains Mono', 'Courier New', Courier, monospace;
-  --font-sans: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "Courier New", Courier, monospace;
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 :root {
-  --bg: #E4E3E0;
+  --bg: #e4e3e0;
   --ink: #141414;
   --line: rgba(20, 20, 20, 0.1);
-  --accent: #F27D26;
+  --accent: #f27d26;
 }
 
 .dark {
   --bg: #141414;
-  --ink: #E4E3E0;
+  --ink: #e4e3e0;
   --line: rgba(228, 227, 224, 0.1);
-  --accent: #F27D26;
+  --accent: #f27d26;
 }
 
 body {
   background-color: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .data-row {
   border-bottom: 1px solid var(--line);
-  transition: background 0.2s ease, color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
 }
 
 .data-row:hover {
@@ -38,7 +42,7 @@ body {
 }
 
 .col-header {
-  font-family: 'Georgia', serif;
+  font-family: "Georgia", serif;
   font-style: italic;
   font-size: 11px;
   opacity: 0.5;
