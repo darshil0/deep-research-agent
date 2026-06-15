@@ -28,19 +28,29 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Security Check - AUTH_TOKEN Rotation Validation
+      - name: Security Check - No Hardcoded Secrets
         run: |
-          # TODO: Implement AUTH_TOKEN rotation validation
-          # In a real scenario, this could check if the token has been updated in the last 90 days
-          echo "Validating AUTH_TOKEN rotation..."
-          # Example check (logic depends on where metadata is stored):
-          # last_rotation=$(get_last_rotation_date AUTH_TOKEN)
-          # if [ $(date +%s) - $(date -d "$last_rotation" +%s) -gt 7776000 ]; then exit 1; fi
-          echo "AUTH_TOKEN rotation validated (TODO)"
+          echo "Checking for hardcoded secrets in code..."
+          # Scan for common secret patterns
+          if grep -rE "(AUTH_TOKEN|API_KEY|SECRET|PASSWORD|APISECRET)=['\"][^'\"]+['\"]" --include="*.js" --include="*.ts" --include="*.env" . 2>/dev/null; then
+            echo "ERROR: Potential hardcoded secrets detected!"
+            exit 1
+          fi
+          echo "No hardcoded secrets found"
 
-      - name: Security Check - API Key Rotation Validation
+      - name: Security Check - .env File Not Commited
         run: |
-          # TODO: Implement API key rotation validation (Gemini, Tavily)
-          echo "Validating API key rotation..."
-          # Similar logic to above
-          echo "API key rotation validated (TODO)"
+          echo "Checking if .env file is in repository..."
+          if [ -f ".env" ]; then
+            echo "ERROR: .env file should not be committed to the repository!"
+            exit 1
+          fi
+          echo ".env file not present (good)"
+
+      - name: Security Check - Dependencies Audit
+        run: |
+          echo "Running npm audit..."
+          npm audit --production || {
+            echo "WARNING: npm audit found issues (non-fatal)"
+          }
+          echo "npm audit completed"
