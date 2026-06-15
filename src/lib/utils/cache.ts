@@ -33,7 +33,7 @@ export class ContentCache {
       if (now - entry.timestamp < this.ttl) {
         return entry.content;
       }
-      
+
       // Expired
       return null;
     } catch (err) {

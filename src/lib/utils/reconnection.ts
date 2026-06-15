@@ -8,7 +8,7 @@
 export function getReconnectionDelay(
   attempt: number,
   initialDelay: number = 1000,
-  maxDelay: number = 10000
+  maxDelay: number = 10000,
 ): number {
   return Math.min(initialDelay * Math.pow(1.5, attempt), maxDelay);
 }

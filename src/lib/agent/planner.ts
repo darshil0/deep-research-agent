@@ -1,21 +1,25 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { withRetry } from "../utils/retry.ts";
 import { parseAIJson } from "../utils/ai.ts";
 
 export class Planner {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
 
-  constructor(ai: GoogleGenAI) {
+  constructor(ai: GoogleGenerativeAI) {
     this.ai = ai;
   }
 
   async createPlan(query: string): Promise<string[]> {
-    const response = await withRetry(() => this.ai.models.generateContent({
-      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `You are a research planning expert. Your task is to decompose a complex research query into 3-5 specific, actionable, and distinct sub-queries.
+    const response = await withRetry(() =>
+      this.ai
+        .getGenerativeModel({ model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp" })
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a research planning expert. Your task is to decompose a complex research query into 3-5 specific, actionable, and distinct sub-queries.
       
       CRITICAL: Detect the language of the query and respond ENTIRELY in that language.
       All sub-queries and the analysis plan must be in the detected language.
@@ -39,25 +43,28 @@ export class Planner {
 
       ### Query to Decompose:
       ${query}`,
-        }],
-      }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.STRING,
-            description: "A specific research sub-query.",
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING,
+                description: "A specific research sub-query.",
+              },
+            },
           },
-        },
-      },
-    }));
+        }),
+    );
 
     try {
-      const plan = parseAIJson<string[]>(response.text || "[]");
+      const plan = parseAIJson<string[]>(response.response.text() || "[]");
       return plan;
     } catch (err) {
-      console.error("Failed to parse planner response:", response.text);
+      console.error("Failed to parse planner response:", response.response.text());
       return [query]; // Fallback to original query
     }
   }

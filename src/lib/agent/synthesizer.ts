@@ -1,22 +1,30 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Citation, ResearchReport } from "./types.ts";
 import { withRetry } from "../utils/retry.ts";
 import { parseAIJson } from "../utils/ai.ts";
 
 export class Synthesizer {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
 
-  constructor(ai: GoogleGenAI) {
+  constructor(ai: GoogleGenerativeAI) {
     this.ai = ai;
   }
 
-  async synthesize(query: string, findings: string[], citations: Citation[]): Promise<Omit<ResearchReport, "metadata">> {
-    const response = await withRetry(() => this.ai.models.generateContent({
-      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
+  async synthesize(
+    query: string,
+    findings: string[],
+    citations: Citation[],
+  ): Promise<Omit<ResearchReport, "metadata">> {
+    const response = await withRetry(() =>
+      this.ai
+        .getGenerativeModel({ model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp" })
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a professional research synthesizer. Your task is to compile a comprehensive, high-quality research report based on the provided findings and citations.
       
       CRITICAL: Detect the language of the research query and respond ENTIRELY in that language.
       CRITICAL: Your entire response MUST be a single valid JSON object. DO NOT include any introductory or concluding conversational filler.
@@ -59,40 +67,48 @@ export class Synthesizer {
 
       ### Output:
       Provide the report in the specified JSON format.`,
-        }],
-      }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            query: { type: Type.STRING },
-            summary: { type: Type.STRING },
-            content: { type: Type.STRING, description: "Detailed research report in Markdown format." },
-            citations: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  url: { type: Type.STRING },
-                  title: { type: Type.STRING },
-                  snippet: { type: Type.STRING },
                 },
-                required: ["id", "url", "title"],
+              ],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.OBJECT,
+              properties: {
+                query: { type: SchemaType.STRING },
+                summary: { type: SchemaType.STRING },
+                content: {
+                  type: SchemaType.STRING,
+                  description: "Detailed research report in Markdown format.",
+                },
+                citations: {
+                  type: SchemaType.ARRAY,
+                  items: {
+                    type: SchemaType.OBJECT,
+                    properties: {
+                      id: { type: SchemaType.STRING },
+                      url: { type: SchemaType.STRING },
+                      title: { type: SchemaType.STRING },
+                      snippet: { type: SchemaType.STRING },
+                    },
+                    required: ["id", "url", "title"],
+                  },
+                },
               },
+              required: ["query", "summary", "content", "citations"],
             },
           },
-          required: ["query", "summary", "content", "citations"],
-        },
-      },
-    }));
+        }),
+    );
 
     try {
-      const report = parseAIJson<Omit<ResearchReport, "metadata">>(response.text || "{}");
+      const report = parseAIJson<Omit<ResearchReport, "metadata">>(
+        response.response.text() || "{}",
+      );
       return report;
     } catch (err) {
-      console.error("Failed to parse synthesizer response:", response.text);
+      console.error("Failed to parse synthesizer response:", response.response.text());
       return {
         query,
         summary: "Failed to synthesize report.",

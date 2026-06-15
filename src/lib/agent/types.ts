@@ -1,6 +1,15 @@
 import { z } from "zod";
 
-export const ResearchStatus = z.enum(["idle", "planning", "searching", "fetching", "analyzing", "synthesizing", "completed", "failed"]);
+export const ResearchStatus = z.enum([
+  "idle",
+  "planning",
+  "searching",
+  "fetching",
+  "analyzing",
+  "synthesizing",
+  "completed",
+  "failed",
+]);
 export type ResearchStatus = z.infer<typeof ResearchStatus>;
 
 export const ResearchStep = z.object({

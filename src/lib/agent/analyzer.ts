@@ -1,21 +1,25 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { withRetry } from "../utils/retry.ts";
 import { parseAIJson } from "../utils/ai.ts";
 
 export class Analyzer {
-  private ai: GoogleGenAI;
+  private ai: GoogleGenerativeAI;
 
-  constructor(ai: GoogleGenAI) {
+  constructor(ai: GoogleGenerativeAI) {
     this.ai = ai;
   }
 
   async analyze(content: string, query: string, sourceTitle: string): Promise<string> {
-    const response = await withRetry(() => this.ai.models.generateContent({
-      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `You are a senior research analyst. Your task is to extract high-quality, evidence-based findings from the provided source content that directly address the research query.
+    const response = await withRetry(() =>
+      this.ai
+        .getGenerativeModel({ model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp" })
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `You are a senior research analyst. Your task is to extract high-quality, evidence-based findings from the provided source content that directly address the research query.
 
       ### Instructions:
       - **Be Specific**: Include exact numbers, dates, names, and technical details.
@@ -38,36 +42,46 @@ export class Analyzer {
       Source Content: ${content.substring(0, 5000)}
 
       ### Findings:`,
-        }],
-      }],
-    }));
+                },
+              ],
+            },
+          ],
+        }),
+    );
 
-    return response.text || "";
+    return response.response.text() || "";
   }
 
   async checkCompleteness(query: string, findings: string[]): Promise<boolean> {
-    const response = await withRetry(() => this.ai.models.generateContent({
-      model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp",
-      contents: [{
-        role: "user",
-        parts: [{
-          text: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
+    const response = await withRetry(() =>
+      this.ai
+        .getGenerativeModel({ model: process.env.AGENT_MODEL || "gemini-2.0-flash-exp" })
+        .generateContent({
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Based on the following research findings, do we have enough information to provide a comprehensive answer to the research query?
       Research Query: ${query}
       Findings: ${findings.join("\n")}
       
       Please answer with a boolean value: true if we have enough information, false otherwise.`,
-        }],
-      }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.BOOLEAN,
-        },
-      },
-    }));
+                },
+              ],
+            },
+          ],
+          generationConfig: {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: SchemaType.BOOLEAN,
+            },
+          },
+        }),
+    );
 
     try {
-      const isComplete = parseAIJson<boolean>(response.text || "false");
+      const isComplete = parseAIJson<boolean>(response.response.text() || "false");
       return isComplete;
     } catch (err) {
       return false;

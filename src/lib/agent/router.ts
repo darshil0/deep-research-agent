@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Planner } from "./planner.ts";
 import { Searcher } from "./searcher.ts";
 import { Analyzer } from "./analyzer.ts";
@@ -14,7 +14,7 @@ export class Router {
   private synthesizer: Synthesizer;
   private providerType: SearchProviderType;
 
-  constructor(ai: GoogleGenAI, providerType: SearchProviderType = "tavily") {
+  constructor(ai: GoogleGenerativeAI, providerType: SearchProviderType = "tavily") {
     this.planner = new Planner(ai);
     this.searcher = new Searcher(ai, providerType);
     this.analyzer = new Analyzer(ai);
@@ -26,7 +26,12 @@ export class Router {
     return await this.planner.createPlan(query);
   }
 
-  async searchAndFetch(query: string, plan: string[], previousFindings: string[], filters?: SearchFilters) {
+  async searchAndFetch(
+    query: string,
+    plan: string[],
+    previousFindings: string[],
+    filters?: SearchFilters,
+  ) {
     return await this.searcher.searchAndFetch(query, plan, previousFindings, filters);
   }
 
@@ -38,7 +43,11 @@ export class Router {
     return await this.analyzer.checkCompleteness(query, findings);
   }
 
-  async synthesize(query: string, findings: string[], citations: Citation[]): Promise<Omit<ResearchReport, "metadata">> {
+  async synthesize(
+    query: string,
+    findings: string[],
+    citations: Citation[],
+  ): Promise<Omit<ResearchReport, "metadata">> {
     return await this.synthesizer.synthesize(query, findings, citations);
   }
 }

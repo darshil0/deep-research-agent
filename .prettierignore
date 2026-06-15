@@ -1,0 +1,6 @@
+dist
+node_modules
+research_results
+cache
+sessions
+coverage
