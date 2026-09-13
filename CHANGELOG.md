@@ -2,7 +2,7 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
-## [1.9.0] - 2026-06-15
+## [1.9.0] - 2026-09-13
 
 ### Added
 
