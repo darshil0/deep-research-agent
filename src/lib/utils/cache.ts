@@ -36,7 +36,7 @@ export class ContentCache {
 
       // Expired
       return null;
-    } catch (err) {
+    } catch {
       // Cache miss or read error
       return null;
     }

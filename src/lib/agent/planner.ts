@@ -63,7 +63,7 @@ export class Planner {
     try {
       const plan = parseAIJson<string[]>(response.response.text() || "[]");
       return plan;
-    } catch (err) {
+    } catch {
       console.error("Failed to parse planner response:", response.response.text());
       return [query]; // Fallback to original query
     }

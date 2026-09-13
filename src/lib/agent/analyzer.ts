@@ -83,7 +83,7 @@ export class Analyzer {
     try {
       const isComplete = parseAIJson<boolean>(response.response.text() || "false");
       return isComplete;
-    } catch (err) {
+    } catch {
       return false;
     }
   }

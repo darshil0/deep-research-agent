@@ -8,13 +8,13 @@ export function parseAIJson<T>(text: string): T {
   // 1. Try direct parsing
   try {
     return JSON.parse(cleanText) as T;
-  } catch (err) {
+  } catch {
     // 2. Try extracting JSON object or array using regex
     const jsonMatch = cleanText.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
     if (jsonMatch) {
       try {
         return JSON.parse(jsonMatch[0]) as T;
-      } catch (innerErr) {
+      } catch {
         console.error("Failed to parse extracted JSON:", jsonMatch[0]);
       }
     }

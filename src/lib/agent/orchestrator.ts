@@ -110,8 +110,8 @@ export class ResearchOrchestrator {
     plan: string[],
     startTime: number,
   ): Promise<{ allFindings: string[]; allCitations: Citation[] }> {
-    let allCitations: Citation[] = [];
-    let allFindings: string[] = [];
+    const allCitations: Citation[] = [];
+    const allFindings: string[] = [];
     let iterations = 0;
 
     while (iterations < this.config.maxIterations) {
