@@ -2,55 +2,113 @@ name: CI/CD Security & Tests
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
+    name: Build, Test, and Security Checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Use Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "npm"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Verify required project files
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f package.json || {
+            echo "::error::package.json was not found."
+            exit 1
+          }
+
+          test -f package-lock.json || {
+            echo "::error::package-lock.json was not found. npm ci requires a committed lockfile."
+            exit 1
+          }
 
       - name: Install dependencies
+        shell: bash
         run: npm ci
 
       - name: Lint
-        run: npm run lint
+        shell: bash
+        run: npm run lint --if-present
 
       - name: Run tests
-        run: npm test
+        shell: bash
+        run: npm test --if-present
 
-      - name: Security Check - No Hardcoded Secrets
+      - name: Security check - Prevent committed environment files
+        shell: bash
         run: |
-          echo "Checking for hardcoded secrets in code..."
-          # Scan for common secret patterns
-          if grep -rE "(AUTH_TOKEN|API_KEY|SECRET|PASSWORD|APISECRET)=['\"][^'\"]+['\"]" --include="*.js" --include="*.ts" --include="*.env" . 2>/dev/null; then
-            echo "ERROR: Potential hardcoded secrets detected!"
+          set -euo pipefail
+
+          tracked_env_files="$(
+            git ls-files \
+              -- '.env' '.env.*' \
+              ':!.env.example' \
+              ':!.env.template' \
+              ':!.env.sample'
+          )"
+
+          if [ -n "$tracked_env_files" ]; then
+            echo "::error::Sensitive environment files are tracked by Git:"
+            echo "$tracked_env_files"
             exit 1
           fi
-          echo "No hardcoded secrets found"
 
-      - name: Security Check - .env File Not Commited
+          echo "No sensitive .env files are tracked by Git."
+
+      - name: Security check - Detect likely hardcoded secrets
+        shell: bash
         run: |
-          echo "Checking if .env file is in repository..."
-          if [ -f ".env" ]; then
-            echo "ERROR: .env file should not be committed to the repository!"
+          set -euo pipefail
+
+          echo "Scanning tracked source files for likely hardcoded secrets..."
+
+          secret_pattern='(API[_-]?KEY|API[_-]?SECRET|AUTH[_-]?TOKEN|ACCESS[_-]?TOKEN|SECRET|PASSWORD|PRIVATE[_-]?KEY)[[:space:]]*[:=][[:space:]]*["'\''][^"'\'']{8,}["'\'']'
+
+          matches="$(
+            git grep -nEI \
+              -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs' \
+              '*.json' '*.yml' '*.yaml' '*.env' \
+              -e "$secret_pattern" \
+              || true
+          )"
+
+          if [ -n "$matches" ]; then
+            echo "::error::Potential hardcoded secret values were detected:"
+            echo "$matches"
+            echo
+            echo "Use GitHub Actions secrets, repository/environment variables, or a managed secret store instead."
             exit 1
           fi
-          echo ".env file not present (good)"
 
-      - name: Security Check - Dependencies Audit
+          echo "No likely hardcoded secrets found in tracked files."
+
+      - name: Security check - Production dependency audit
+        shell: bash
         run: |
-          echo "Running npm audit..."
-          npm audit --production || {
-            echo "WARNING: npm audit found issues (non-fatal)"
-          }
-          echo "npm audit completed"
+          set -euo pipefail
+
+          echo "Auditing production dependencies for high- and critical-severity vulnerabilities..."
+          npm audit --omit=dev --audit-level=high
