@@ -29,8 +29,8 @@ describe("ContentCache", () => {
       timestamp: Date.now(),
     };
     const writeSpy = vi.spyOn(fs, "writeFile").mockResolvedValue(undefined);
-    const readSpy = vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(entry));
-    const mkdirSpy = vi.spyOn(fs, "mkdir").mockResolvedValue(undefined as any);
+    vi.spyOn(fs, "readFile").mockResolvedValue(JSON.stringify(entry));
+    vi.spyOn(fs, "mkdir").mockResolvedValue(undefined as any);
 
     await cache.set("http://example.com", content);
     expect(writeSpy).toHaveBeenCalled();

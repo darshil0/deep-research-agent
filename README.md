@@ -25,6 +25,7 @@ An autonomous, iterative research agent built with TypeScript/React, powered by 
 ## 🏗️ Architecture
 
 ### AI & Agent Layer (TypeScript)
+
 - **ResearchOrchestrator**: Manages the high-level research lifecycle (Plan → Research → Synthesize → Validate)
 - **Router**: Dispatches tasks to specific agent modules, handles state synchronization, and manages error recovery
 - **Planner**: Decomposes research topic into logical, actionable sub-queries using Gemini 1.5/2.0; includes cost estimation
@@ -34,12 +35,14 @@ An autonomous, iterative research agent built with TypeScript/React, powered by 
 - **ValidationEngine**: Verifies factual consistency, detects conflicting claims, and flags sources requiring secondary verification
 
 ### Backend (Node.js/Express)
+
 - **Server**: Handles API endpoints, authentication middleware, WebSocket connections, and request rate limiting
 - **ContentCache**: Robust caching layer storing fetched HTML content with TTL management and automatic cleanup
 - **ErrorHandler**: Centralized error handling with circuit breaker pattern for failed providers
 - **SessionManager**: Manages client sessions, token lifecycle, and automatic cleanup of orphaned sessions
 
 ### Frontend (React + Vite)
+
 - **Modern UI**: Premium, dark-themed interface optimized for speed and accessibility
 - **Auth Modal**: Integrated task-level security with token input/validation for private or team research sessions
 - **Progress Dashboard**: Real-time visual feedback with activity logs, estimated time remaining, and cost tracking
@@ -50,6 +53,7 @@ An autonomous, iterative research agent built with TypeScript/React, powered by 
 ## 🛠️ Setup
 
 ### Prerequisites
+
 - Node.js 18+ (tested on 18.16.0 and 20.x)
 - npm 8+ or yarn 3+
 - **Google AI Studio API Key** (Required for Gemini; free tier available)
@@ -171,44 +175,47 @@ SESSION_STORE=memory            # Options: memory, redis, file (see Deployment s
 
 ### Environment Variables
 
-| Variable | Required | Default | Description | Security Notes |
-|----------|----------|---------|-------------|-----------------|
-| `GEMINI_API_KEY` | **Yes** | — | Google Gemini API key from [AI Studio](https://aistudio.google.com) | Never commit to git; rotate quarterly |
-| `AGENT_MODEL` | No | `gemini-2.0-flash-exp` | AI model for planning/synthesis (alternatives: `gemini-1.5-pro`, `gemini-1.5-flash`) | Supported models listed in [API Reference](#api-reference) |
-| `TAVILY_API_KEY` | No | — | Tavily Search API key; leave blank to disable Tavily | Optional; enable Hybrid search coverage |
-| `SEARCH_MODE` | No | `hybrid` | Search provider mode: `tavily`, `google`, or `hybrid` | See [Search Provider Behavior](#search-provider-behavior) |
-| `AUTH_TOKEN` | No | — | Token required for API and WebSocket access; leave blank to disable (dev only) | **CRITICAL**: Use strong random token (32+ chars); rotate every 90 days |
-| `TOKEN_EXPIRY_SECONDS` | No | `3600` | Session token lifetime (seconds) | Range: 300–86400 (5 min – 24 hours) |
-| `TOKEN_REFRESH_THRESHOLD` | No | `300` | Refresh token N seconds before expiry | Recommended: 5 minutes |
-| `CACHE_TTL` | No | `86400` | Content cache duration (seconds) | Range: 300–604800 (5 min – 7 days) |
-| `RESULTS_MAX_AGE_DAYS` | No | `7` | Purge result files older than N days | Range: 1–30; impacts storage usage |
-| `CACHE_DIR` | No | `./cache` | File-based cache directory path | Must be writable; auto-created if missing |
-| `RATE_LIMIT_REQUESTS` | No | `100` | Max API requests per rate limit window | Adjust based on expected concurrency |
-| `RATE_LIMIT_WINDOW_MS` | No | `60000` | Rate limit evaluation window (ms) | Standard: 60000 (1 minute) |
-| `MAX_CONCURRENT_SEARCHES` | No | `3` | Maximum parallel search operations | Range: 1–10; impacts latency & cost |
-| `MAX_RESEARCH_DEPTH` | No | `5` | Maximum decomposed sub-queries per task | Range: 1–10; controls research scope |
-| `API_QUOTA_DAILY_LIMIT` | No | `10000` | Daily API call budget (0 = unlimited) | Track costs in production; set alert if approaching limit |
-| `WS_RECONNECT_MAX_ATTEMPTS` | No | `5` | Max WebSocket reconnection attempts | After N failures, user must manually reconnect |
-| `WS_RECONNECT_INITIAL_DELAY` | No | `1000` | Initial reconnection delay (ms) | Uses exponential backoff: delay × 1.5 per attempt |
-| `WS_PING_INTERVAL` | No | `30000` | Keep-alive ping interval (ms) | Prevents connection timeout by idle proxies |
-| `LOG_LEVEL` | No | `info` | Logging verbosity: `debug`, `info`, `warn`, `error` | Use `debug` for development only |
-| `NODE_ENV` | No | `development` | Execution environment | Production must use `production` |
-| `PORT` | No | `3000` | Server listening port | Use `3000–9999` for development |
-| `SESSION_STORE` | No | `memory` | Session backend: `memory`, `redis`, or `file` | Use `redis` in production for multi-instance deployments |
+| Variable                     | Required | Default                | Description                                                                          | Security Notes                                                          |
+| ---------------------------- | -------- | ---------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| `GEMINI_API_KEY`             | **Yes**  | —                      | Google Gemini API key from [AI Studio](https://aistudio.google.com)                  | Never commit to git; rotate quarterly                                   |
+| `AGENT_MODEL`                | No       | `gemini-2.0-flash-exp` | AI model for planning/synthesis (alternatives: `gemini-1.5-pro`, `gemini-1.5-flash`) | Supported models listed in [API Reference](#api-reference)              |
+| `TAVILY_API_KEY`             | No       | —                      | Tavily Search API key; leave blank to disable Tavily                                 | Optional; enable Hybrid search coverage                                 |
+| `SEARCH_MODE`                | No       | `hybrid`               | Search provider mode: `tavily`, `google`, or `hybrid`                                | See [Search Provider Behavior](#search-provider-behavior)               |
+| `AUTH_TOKEN`                 | No       | —                      | Token required for API and WebSocket access; leave blank to disable (dev only)       | **CRITICAL**: Use strong random token (32+ chars); rotate every 90 days |
+| `TOKEN_EXPIRY_SECONDS`       | No       | `3600`                 | Session token lifetime (seconds)                                                     | Range: 300–86400 (5 min – 24 hours)                                     |
+| `TOKEN_REFRESH_THRESHOLD`    | No       | `300`                  | Refresh token N seconds before expiry                                                | Recommended: 5 minutes                                                  |
+| `CACHE_TTL`                  | No       | `86400`                | Content cache duration (seconds)                                                     | Range: 300–604800 (5 min – 7 days)                                      |
+| `RESULTS_MAX_AGE_DAYS`       | No       | `7`                    | Purge result files older than N days                                                 | Range: 1–30; impacts storage usage                                      |
+| `CACHE_DIR`                  | No       | `./cache`              | File-based cache directory path                                                      | Must be writable; auto-created if missing                               |
+| `RATE_LIMIT_REQUESTS`        | No       | `100`                  | Max API requests per rate limit window                                               | Adjust based on expected concurrency                                    |
+| `RATE_LIMIT_WINDOW_MS`       | No       | `60000`                | Rate limit evaluation window (ms)                                                    | Standard: 60000 (1 minute)                                              |
+| `MAX_CONCURRENT_SEARCHES`    | No       | `3`                    | Maximum parallel search operations                                                   | Range: 1–10; impacts latency & cost                                     |
+| `MAX_RESEARCH_DEPTH`         | No       | `5`                    | Maximum decomposed sub-queries per task                                              | Range: 1–10; controls research scope                                    |
+| `API_QUOTA_DAILY_LIMIT`      | No       | `10000`                | Daily API call budget (0 = unlimited)                                                | Track costs in production; set alert if approaching limit               |
+| `WS_RECONNECT_MAX_ATTEMPTS`  | No       | `5`                    | Max WebSocket reconnection attempts                                                  | After N failures, user must manually reconnect                          |
+| `WS_RECONNECT_INITIAL_DELAY` | No       | `1000`                 | Initial reconnection delay (ms)                                                      | Uses exponential backoff: delay × 1.5 per attempt                       |
+| `WS_PING_INTERVAL`           | No       | `30000`                | Keep-alive ping interval (ms)                                                        | Prevents connection timeout by idle proxies                             |
+| `LOG_LEVEL`                  | No       | `info`                 | Logging verbosity: `debug`, `info`, `warn`, `error`                                  | Use `debug` for development only                                        |
+| `NODE_ENV`                   | No       | `development`          | Execution environment                                                                | Production must use `production`                                        |
+| `PORT`                       | No       | `3000`                 | Server listening port                                                                | Use `3000–9999` for development                                         |
+| `SESSION_STORE`              | No       | `memory`               | Session backend: `memory`, `redis`, or `file`                                        | Use `redis` in production for multi-instance deployments                |
 
 ### Search Provider Behavior
 
 #### **Tavily Mode**
+
 - **Pros**: High-quality results, built-in source extraction, fast turnaround
 - **Cons**: Requires API key, rate-limited (varies by tier), costs $0.005–$0.01 per search
 - **Best For**: Production environments, high-accuracy requirements, cost-conscious operations (free tier: 1000/month)
 
 #### **Google Mode**
+
 - **Pros**: No additional API key required (uses Gemini grounding), unlimited searches, comprehensive coverage
 - **Cons**: Slower (requires multiple passes), less structured data extraction, subject to Google Search terms of service
 - **Best For**: Development, open-ended research, scenarios where cost is a concern
 
 #### **Hybrid Mode (Recommended)**
+
 - **How It Works**:
   1. Initiates parallel searches with both Tavily and Google
   2. Merges results by relevance score and URL deduplication
@@ -235,6 +242,7 @@ Authorization: Bearer YOUR_AUTH_TOKEN_HERE
 ```
 
 **Token Validation Rules**:
+
 - Tokens expire after `TOKEN_EXPIRY_SECONDS` (default: 1 hour)
 - Expired tokens return `401 Unauthorized`
 - Clients must refresh tokens when within `TOKEN_REFRESH_THRESHOLD` (default: 5 min before expiry)
@@ -247,6 +255,7 @@ Authorization: Bearer YOUR_AUTH_TOKEN_HERE
 Initializes a new research task.
 
 **Request**:
+
 ```json
 {
   "query": "Latest developments in quantum computing 2025",
@@ -267,6 +276,7 @@ Initializes a new research task.
 | `outputFormat` | string | No | `markdown` | One of: `markdown`, `json`, `html` |
 
 **Response** (201 Created):
+
 ```json
 {
   "taskId": "task_abc123xyz789",
@@ -296,6 +306,7 @@ Initializes a new research task.
 Real-time status of an active research task.
 
 **Response**:
+
 ```json
 {
   "taskId": "task_abc123xyz789",
@@ -332,6 +343,7 @@ Real-time status of an active research task.
 Retrieves completed research report and metadata.
 
 **Response**:
+
 ```json
 {
   "taskId": "task_abc123xyz789",
@@ -395,6 +407,7 @@ Lists all research tasks (paginated).
 | `sortOrder` | string | `desc` | `asc` or `desc` |
 
 **Response**:
+
 ```json
 {
   "tasks": [
@@ -423,6 +436,7 @@ Lists all research tasks (paginated).
 Cancels a running task or deletes completed results.
 
 **Response**:
+
 ```json
 {
   "taskId": "task_abc123xyz789",
@@ -438,11 +452,13 @@ Cancels a running task or deletes completed results.
 Real-time research updates via WebSocket.
 
 **Connection**:
+
 ```
 ws://localhost:3000?taskId=task_abc123xyz789&token=YOUR_AUTH_TOKEN_HERE
 ```
 
 **Message Format** (server → client):
+
 ```json
 {
   "type": "progress",
@@ -454,12 +470,14 @@ ws://localhost:3000?taskId=task_abc123xyz789&token=YOUR_AUTH_TOKEN_HERE
 ```
 
 **Message Types**:
+
 - `progress`: Task progress update
 - `alert`: Warning or non-fatal error (e.g., one provider unavailable)
 - `error`: Fatal error; task will not complete
 - `completed`: Task finished successfully; final report available
 
 **Reconnection Strategy**:
+
 - Uses exponential backoff: delay = initial_delay × 1.5^(attempt - 1)
 - Max 5 reconnection attempts (configurable via `WS_RECONNECT_MAX_ATTEMPTS`)
 - Automatic server-side cleanup after 10 minutes of inactivity
@@ -470,20 +488,21 @@ ws://localhost:3000?taskId=task_abc123xyz789&token=YOUR_AUTH_TOKEN_HERE
 
 ### Failure Scenarios & Recovery
 
-| Scenario | HTTP Code | Client Behavior | Recovery |
-|----------|-----------|-----------------|----------|
-| **Search provider timeout (10s)** | — | Hybrid: switches to alternate provider; Single: retries 2x | If both fail → returns partial results with confidence warning |
-| **API quota exceeded** | 429 | Queues request; exponential backoff retry | User receives estimated wait time; can cancel task |
-| **Invalid/expired auth token** | 401 | User prompted to re-enter token | Token auto-refresh attempted if within threshold |
-| **WebSocket disconnection** | — | Automatic reconnect (up to 5 attempts) | After 5 failures, manual reconnect required; progress checkpoint saved |
-| **Gemini API unavailable** | 503 | Task fails; search results cached from previous step | Notify user; offer to export partial results; retry later |
-| **Cache miss (fresh data required)** | — | On-demand fetch; may add 2–5s latency | User sees loading indicator; cost tracked separately |
+| Scenario                             | HTTP Code | Client Behavior                                            | Recovery                                                               |
+| ------------------------------------ | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Search provider timeout (10s)**    | —         | Hybrid: switches to alternate provider; Single: retries 2x | If both fail → returns partial results with confidence warning         |
+| **API quota exceeded**               | 429       | Queues request; exponential backoff retry                  | User receives estimated wait time; can cancel task                     |
+| **Invalid/expired auth token**       | 401       | User prompted to re-enter token                            | Token auto-refresh attempted if within threshold                       |
+| **WebSocket disconnection**          | —         | Automatic reconnect (up to 5 attempts)                     | After 5 failures, manual reconnect required; progress checkpoint saved |
+| **Gemini API unavailable**           | 503       | Task fails; search results cached from previous step       | Notify user; offer to export partial results; retry later              |
+| **Cache miss (fresh data required)** | —         | On-demand fetch; may add 2–5s latency                      | User sees loading indicator; cost tracked separately                   |
 
 ### Circuit Breaker Pattern
 
 If a search provider fails 3 consecutive times, it is automatically disabled for 5 minutes to prevent cascading failures.
 
 **Example Log Output**:
+
 ```
 [2026-05-31 14:25:30] WARN: Tavily search failed (attempt 3/3)
 [2026-05-31 14:25:30] INFO: Circuit breaker activated for Tavily. Fallback to Google search.
@@ -495,6 +514,7 @@ If a search provider fails 3 consecutive times, it is automatically disabled for
 ## 🔒 Security Best Practices
 
 ### API Key Management
+
 - **Never** commit `.env` to version control; use `.gitignore`
 - Store credentials in a secure secrets manager (AWS Secrets Manager, HashiCorp Vault, GitHub Secrets for CI/CD)
 - Rotate `AUTH_TOKEN` every 90 days
@@ -503,6 +523,7 @@ If a search provider fails 3 consecutive times, it is automatically disabled for
 ### Token Lifecycle
 
 **Client-Side Flow**:
+
 1. User enters `AUTH_TOKEN` at startup or via auth modal
 2. Token stored in `sessionStorage` (cleared on browser close)
 3. Every request includes token in `Authorization: Bearer` header
@@ -511,6 +532,7 @@ If a search provider fails 3 consecutive times, it is automatically disabled for
 6. If refresh fails, user prompted to re-enter token
 
 **Server-Side Validation**:
+
 ```typescript
 if (token.isExpired()) {
   return 401; // Unauthorized
@@ -565,13 +587,13 @@ npm test -- __tests__/analyzer.test.ts
 All tests use **Given/When/Then** structure:
 
 ```typescript
-describe('Analyzer', () => {
-  describe('extractClaims', () => {
-    it('Given conflicting sources, When analyzing, Then flags claims as disputed', () => {
+describe("Analyzer", () => {
+  describe("extractClaims", () => {
+    it("Given conflicting sources, When analyzing, Then flags claims as disputed", () => {
       // Given
       const sources = [
-        { content: 'Claim A is true', url: 'source1.com' },
-        { content: 'Claim A is false', url: 'source2.com' }
+        { content: "Claim A is true", url: "source1.com" },
+        { content: "Claim A is false", url: "source2.com" },
       ];
 
       // When
@@ -580,10 +602,10 @@ describe('Analyzer', () => {
       // Then
       expect(claims).toContainEqual(
         expect.objectContaining({
-          text: 'Claim A',
+          text: "Claim A",
           disputed: true,
-          perspectives: 2
-        })
+          perspectives: 2,
+        }),
       );
     });
   });
@@ -658,12 +680,12 @@ CMD ["npm", "start"]
 **Build & Run**:
 
 ```bash
-docker build -t deep-research-agent:1.8.0 .
+docker build -t deep-research-agent:1.9.0 .
 docker run -p 3000:3000 \
   -e GEMINI_API_KEY=your_key \
   -e AUTH_TOKEN=your_token \
   -e NODE_ENV=production \
-  deep-research-agent:1.8.0
+  deep-research-agent:1.9.0
 ```
 
 ### Cloud Deployment (AWS, GCP, Azure)
@@ -671,10 +693,11 @@ docker run -p 3000:3000 \
 #### **AWS ECS**
 
 1. Push image to ECR:
+
    ```bash
    aws ecr get-login-password | docker login --username AWS --password-stdin YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com
-   docker tag deep-research-agent:1.8.0 YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/deep-research-agent:1.8.0
-   docker push YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/deep-research-agent:1.8.0
+   docker tag deep-research-agent:1.9.0 YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/deep-research-agent:1.9.0
+   docker push YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/deep-research-agent:1.9.0
    ```
 
 2. Deploy with Terraform or CloudFormation (see `/infra` directory in repo)
@@ -683,7 +706,7 @@ docker run -p 3000:3000 \
 
 ```bash
 gcloud run deploy deep-research-agent \
-  --image gcr.io/YOUR_PROJECT/deep-research-agent:1.8.0 \
+  --image gcr.io/YOUR_PROJECT/deep-research-agent:1.9.0 \
   --platform managed \
   --region us-central1 \
   --set-env-vars GEMINI_API_KEY=your_key,NODE_ENV=production
@@ -691,11 +714,11 @@ gcloud run deploy deep-research-agent \
 
 #### **Environment-Specific Configuration**
 
-| Environment | `NODE_ENV` | `SESSION_STORE` | `LOG_LEVEL` | Notes |
-|-------------|-----------|-----------------|------------|-------|
-| Development | `development` | `memory` | `debug` | Hot reload enabled |
-| Staging | `staging` | `file` | `info` | Auth required; production-like |
-| Production | `production` | `redis` | `warn` | HA setup; load balancer; CDN |
+| Environment | `NODE_ENV`    | `SESSION_STORE` | `LOG_LEVEL` | Notes                          |
+| ----------- | ------------- | --------------- | ----------- | ------------------------------ |
+| Development | `development` | `memory`        | `debug`     | Hot reload enabled             |
+| Staging     | `staging`     | `file`          | `info`      | Auth required; production-like |
+| Production  | `production`  | `redis`         | `warn`      | HA setup; load balancer; CDN   |
 
 ---
 
@@ -717,10 +740,8 @@ curl -X POST http://localhost:3000/api/research/start \
 ### Example 2: Monitor Research Progress
 
 ```javascript
-const taskId = 'task_abc123xyz789';
-const ws = new WebSocket(
-  `ws://localhost:3000?taskId=${taskId}&token=${AUTH_TOKEN}`
-);
+const taskId = "task_abc123xyz789";
+const ws = new WebSocket(`ws://localhost:3000?taskId=${taskId}&token=${AUTH_TOKEN}`);
 
 ws.onmessage = (event) => {
   const message = JSON.parse(event.data);
@@ -729,7 +750,7 @@ ws.onmessage = (event) => {
 };
 
 ws.onerror = (error) => {
-  console.error('WebSocket error:', error);
+  console.error("WebSocket error:", error);
   // Client will auto-reconnect
 };
 ```
@@ -738,15 +759,14 @@ ws.onerror = (error) => {
 
 ```javascript
 // After research completes, call export endpoint
-const response = await fetch(
-  `/api/research/results/${taskId}/export?format=pdf`,
-  { headers: { Authorization: `Bearer ${AUTH_TOKEN}` } }
-);
+const response = await fetch(`/api/research/results/${taskId}/export?format=pdf`, {
+  headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
+});
 const blob = await response.blob();
 const url = window.URL.createObjectURL(blob);
-const a = document.createElement('a');
+const a = document.createElement("a");
 a.href = url;
-a.download = 'research-report.pdf';
+a.download = "research-report.pdf";
 a.click();
 ```
 
@@ -761,6 +781,7 @@ a.click();
 **Symptoms**: "WebSocket connection failed" message; no progress updates
 
 **Solutions**:
+
 1. Verify `AUTH_TOKEN` is correct (if enabled)
 2. Check network connectivity (proxy/firewall may block WebSocket)
 3. Ensure server is running: `npm run dev`
@@ -768,6 +789,7 @@ a.click();
 5. If behind a proxy, configure WebSocket proxy settings
 
 **Logs**:
+
 ```bash
 # Enable debug logging
 LOG_LEVEL=debug npm run dev
@@ -783,6 +805,7 @@ LOG_LEVEL=debug npm run dev
 **Causes**: Too many concurrent requests or high query volume
 
 **Solutions**:
+
 1. Increase `RATE_LIMIT_WINDOW_MS` or `RATE_LIMIT_REQUESTS` (if admin)
 2. Reduce `MAX_CONCURRENT_SEARCHES` to throttle parallelism
 3. Wait for rate limit window to reset (default: 60 seconds)
@@ -797,6 +820,7 @@ LOG_LEVEL=debug npm run dev
 **Causes**: Query too specific, both providers temporarily down, rate-limited
 
 **Solutions**:
+
 1. Broaden query (e.g., "latest AI advances" instead of "GPT-5 feature X released May 2026")
 2. Wait 60s and retry (may hit provider rate limits)
 3. Check `SEARCH_MODE` is set correctly: `echo $SEARCH_MODE`
@@ -812,6 +836,7 @@ LOG_LEVEL=debug npm run dev
 **Causes**: Missing graphics library (headless Chrome), permission issues
 
 **Solutions**:
+
 1. On Linux: `sudo apt-get install chromium chromium-chromedriver`
 2. On macOS: Install via Homebrew: `brew install chromium`
 3. Verify write permissions: `touch ./exports/test.pdf`
@@ -826,6 +851,7 @@ LOG_LEVEL=debug npm run dev
 **Causes**: Large cache, many concurrent searches, memory leak
 
 **Solutions**:
+
 1. Reduce `CACHE_TTL` or `RESULTS_MAX_AGE_DAYS`
 2. Lower `MAX_CONCURRENT_SEARCHES` (e.g., 1–2 instead of 3+)
 3. Enable memory profiling: `node --inspect-brk app.js`
@@ -843,17 +869,18 @@ LOG_LEVEL=debug ENABLE_PERFORMANCE_LOGGING=true npm run dev
 ```
 
 **Log Locations**:
+
 - Console: All messages (development)
 - File: `./logs/app.log` (production; auto-rotates daily)
 
 **Key Log Patterns**:
 
-| Pattern | Meaning | Action |
-|---------|---------|--------|
-| `[WARN] Circuit breaker activated for Tavily` | One provider down | Automatic fallback; continue monitoring |
-| `[ERROR] Token validation failed` | Auth issue | Verify `AUTH_TOKEN` and expiry |
-| `[INFO] Research completed in 45 seconds` | Normal completion | No action needed |
-| `[ERROR] Gemini API error: 429` | Provider rate limited | Increase `CACHE_TTL` to reduce API calls |
+| Pattern                                       | Meaning               | Action                                   |
+| --------------------------------------------- | --------------------- | ---------------------------------------- |
+| `[WARN] Circuit breaker activated for Tavily` | One provider down     | Automatic fallback; continue monitoring  |
+| `[ERROR] Token validation failed`             | Auth issue            | Verify `AUTH_TOKEN` and expiry           |
+| `[INFO] Research completed in 45 seconds`     | Normal completion     | No action needed                         |
+| `[ERROR] Gemini API error: 429`               | Provider rate limited | Increase `CACHE_TTL` to reduce API calls |
 
 ---
 
@@ -883,8 +910,7 @@ LOG_LEVEL=debug ENABLE_PERFORMANCE_LOGGING=true npm run dev
 
 ## 🔄 Changelog
 
-For detailed version history, see [Changelog.md](./Changelog.md) in the repository root.
-
+For detailed version history, see [CHANGELOG.md](./CHANGELOG.md) in the repository root.
 
 ---
 
@@ -915,5 +941,5 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on submitting issues, pu
 
 **Maintained by**: Your Organization
 **Active Contributors**: See [CONTRIBUTORS.md](./CONTRIBUTORS.md)
-**Last Updated**: May 31, 2026
-**Version**: 1.8.0 ✅
+**Last Updated**: June 15, 2026
+**Version**: 1.9.0 ✅

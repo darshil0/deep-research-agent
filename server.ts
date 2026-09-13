@@ -38,7 +38,7 @@ const errorHandler = (
   err: any,
   req: express.Request,
   res: express.Response,
-  next: express.NextFunction,
+  _next: express.NextFunction,
 ) => {
   console.error("Express Error:", err);
   const status = err.status || 500;
@@ -91,7 +91,9 @@ async function startServer() {
   app.post("/api/research/start", async (req, res, next) => {
     try {
       const { query, config } = req.body;
-      if (!query) return res.status(400).json({ error: "Query is required" });
+      if (!query || typeof query !== "string" || !query.trim()) {
+        return res.status(400).json({ error: "Query is required" });
+      }
 
       const taskId = Math.random().toString(36).substring(7);
       const state: ResearchState = {
@@ -101,20 +103,25 @@ async function startServer() {
       tasks.set(taskId, state);
 
       // Start research in background
-      const orchestrator = new ResearchOrchestrator(query, config as ResearchConfig, (update) => {
-        tasks.set(taskId, update);
-        const ws = clients.get(taskId);
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify(update));
-        }
-      });
+      const orchestrator = new ResearchOrchestrator(
+        query.trim(),
+        config as ResearchConfig,
+        (update) => {
+          tasks.set(taskId, update);
+          const ws = clients.get(taskId);
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify(update));
+          }
+        },
+      );
 
       orchestrator.run().catch((err) => {
         console.error(`Task ${taskId} failed:`, err);
+        const currentState = tasks.get(taskId) || { status: "idle", steps: [] };
         const failedState: ResearchState = {
-          ...tasks.get(taskId)!,
+          ...currentState,
           status: "failed",
-          error: err.message,
+          error: err instanceof Error ? err.message : String(err),
         };
         tasks.set(taskId, failedState);
         const ws = clients.get(taskId);
@@ -172,7 +179,10 @@ async function startServer() {
       const filePath = path.join(process.cwd(), "research_results", `${taskId}.json`);
       const content = await fs.readFile(filePath, "utf-8");
       res.json(JSON.parse(content));
-    } catch (err) {
+    } catch (err: any) {
+      if (err && err.code === "ENOENT") {
+        return res.status(404).json({ error: "Research result not found" });
+      }
       next(err);
     }
   });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Search,
   Loader2,
@@ -16,7 +16,7 @@ import {
   Plus,
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { ResearchState, ResearchConfig, ResearchStep, ResearchReport } from "./lib/agent/types.ts";
+import { ResearchState, ResearchConfig } from "./lib/agent/types.ts";
 import ReactMarkdown from "react-markdown";
 import { toast, Toaster } from "sonner";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
@@ -58,18 +58,7 @@ export default function App() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Restore task from localStorage and load history
-  useEffect(() => {
-    const savedTaskId = localStorage.getItem("lastTaskId");
-    if (savedTaskId) {
-      setTaskId(savedTaskId);
-      fetchStatus(savedTaskId);
-    }
-    loadHistory();
-    setIsInitialLoading(false);
-  }, []);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       const headers: any = {};
       if (authToken) headers["Authorization"] = authToken;
@@ -81,26 +70,40 @@ export default function App() {
     } catch (err) {
       console.error("Failed to load history:", err);
     }
-  };
+  }, [authToken]);
 
-  const fetchStatus = async (id: string) => {
-    try {
-      const headers: any = {};
-      if (authToken) headers["Authorization"] = authToken;
-      const response = await fetch(`/api/research/status/${id}`, { headers });
-      if (response.ok) {
-        const data = await response.json();
-        setState(data);
-        if (data.status === "completed" || data.status === "failed") {
-          setIsResearching(false);
-        } else {
-          setIsResearching(true);
+  const fetchStatus = useCallback(
+    async (id: string) => {
+      try {
+        const headers: any = {};
+        if (authToken) headers["Authorization"] = authToken;
+        const response = await fetch(`/api/research/status/${id}`, { headers });
+        if (response.ok) {
+          const data = await response.json();
+          setState(data);
+          if (data.status === "completed" || data.status === "failed") {
+            setIsResearching(false);
+          } else {
+            setIsResearching(true);
+          }
         }
+      } catch (err) {
+        console.error("Failed to fetch task status:", err);
       }
-    } catch (err) {
-      console.error("Failed to fetch task status:", err);
+    },
+    [authToken],
+  );
+
+  // Restore task from localStorage and load history
+  useEffect(() => {
+    const savedTaskId = localStorage.getItem("lastTaskId");
+    if (savedTaskId) {
+      setTaskId(savedTaskId);
+      fetchStatus(savedTaskId);
     }
-  };
+    loadHistory();
+    setIsInitialLoading(false);
+  }, [fetchStatus, loadHistory]);
 
   const selectHistoryItem = async (id: string) => {
     setTaskId(id);
@@ -113,7 +116,7 @@ export default function App() {
         setIsResearching(data.status !== "completed" && data.status !== "failed");
         setQuery("");
       }
-    } catch (err) {
+    } catch {
       toast.error("Failed to load research result.");
     }
   };
@@ -141,6 +144,7 @@ export default function App() {
 
   useEffect(() => {
     let isMounted = true;
+    const isFinished = state?.status === "completed" || state?.status === "failed";
 
     const connectWebSocket = () => {
       if (!taskId) return;
@@ -180,7 +184,6 @@ export default function App() {
         if (!isMounted) return;
 
         // Don't reconnect if it was a normal closure or if research is finished
-        const isFinished = state?.status === "completed" || state?.status === "failed";
         if (event.code === 1000 || event.code === 1008 || isFinished) {
           setIsResearching(false);
           return;
@@ -214,7 +217,7 @@ export default function App() {
       if (wsRef.current) wsRef.current.close();
       if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
     };
-  }, [taskId, reconnectAttempts]);
+  }, [taskId, reconnectAttempts, authToken, state?.status]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -411,7 +414,7 @@ export default function App() {
             </button>
             <div className="h-4 w-[1px] bg-white/10 hidden sm:block" />
             <div className="text-[10px] font-mono text-white/40 uppercase tracking-widest hidden sm:block">
-              v1.7.0
+              v1.9.0
             </div>
           </div>
         </div>
@@ -748,7 +751,7 @@ export default function App() {
                         ref={scrollRef}
                         className="space-y-3 max-h-[400px] sm:max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10"
                       >
-                        {state.steps.map((step, i) => (
+                        {state.steps.map((step) => (
                           <motion.div
                             key={step.id}
                             initial={{ opacity: 0, x: -10 }}

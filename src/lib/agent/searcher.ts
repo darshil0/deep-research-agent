@@ -89,7 +89,7 @@ export class Searcher {
         if (content) {
           contents.push({ source, content });
         }
-      } catch (err) {
+      } catch {
         // Log handled in fetchContent
       }
     }

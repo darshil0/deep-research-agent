@@ -18,8 +18,10 @@ All notable changes to the Deep Research Agent project will be documented in thi
 
 ### Fixed
 
-- **Type Safety**: Resolved numerous TypeScript errors related to implicit `any` types and missing module declarations for `ws`, `sonner`, `date-fns`, and others.
-- **Documentation**: Renamed `Changelog.MD` to `CHANGELOG.md` for standard naming conventions.
+- **Type Safety & Linting**: Resolved all ESLint warnings and unused parameter/import issues across `server.ts`, `App.tsx`, agent modules (`orchestrator`, `analyzer`, `planner`, `searcher`, `synthesizer`), utilities (`ai`, `cache`), and unit tests.
+- **React Hook Dependencies**: Refactored React hooks (`useEffect`, `useCallback`) in `App.tsx` for proper dependency tracking and WebSocket lifecycle management.
+- **Backend Error Handling**: Added 404 responses for non-existent research results in `/api/research/results/:taskId` and defensive fallback handling for background research task failures in `/api/research/start`.
+- **Project Metadata & Versioning**: Synchronized project version `1.9.0` and package name `deep-research-agent` across `package.json`, `App.tsx` header UI, and `README.md`.
 
 ---
 

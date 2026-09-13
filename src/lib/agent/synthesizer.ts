@@ -107,7 +107,7 @@ export class Synthesizer {
         response.response.text() || "{}",
       );
       return report;
-    } catch (err) {
+    } catch {
       console.error("Failed to parse synthesizer response:", response.response.text());
       return {
         query,
