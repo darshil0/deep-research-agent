@@ -2,7 +2,7 @@
 
 An autonomous, iterative research agent built with TypeScript/React, powered by Google's Gemini 2.0 Flash model. This production-ready platform performs deep web research, extracts evidence, and synthesizes comprehensive reports with citations.
 
-**Current Version**: 1.9.0 | **Status**: Production Ready ✅ | **Last Updated**: June 15, 2026
+**Current Version**: 1.9.0 | **Status**: Production Ready ✅ | **Last Updated**: Sepember 13, 2026
 
 ---
 
