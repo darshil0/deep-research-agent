@@ -2,6 +2,17 @@
 
 All notable changes to the Deep Research Agent project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **CI/CD Pipeline Security Scanning**: Corrected flag ordering in `git grep` secret detection step within `.github/workflows/main.yml`.
+- **CI/CD Dependency Installation**: Added `--legacy-peer-deps` to the `npm ci` step in GitHub Actions to resolve peer dependency resolution errors with ESLint 10.
+- **Dependency Security Vulnerabilities**: Resolved production dependency audit vulnerabilities across `nanoid`, `postcss`, and `undici` in `package-lock.json`.
+
+---
+
+
 ## [1.9.0] - 2026-09-13
 
 ### Added

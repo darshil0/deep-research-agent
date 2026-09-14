@@ -47,7 +47,7 @@ jobs:
 
       - name: Install dependencies
         shell: bash
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Lint
         shell: bash
@@ -89,9 +89,9 @@ jobs:
 
           matches="$(
             git grep -nEI \
+              -e "$secret_pattern" \
               -- '*.js' '*.jsx' '*.ts' '*.tsx' '*.mjs' '*.cjs' \
               '*.json' '*.yml' '*.yaml' '*.env' \
-              -e "$secret_pattern" \
               || true
           )"
 
