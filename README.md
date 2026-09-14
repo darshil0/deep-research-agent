@@ -941,5 +941,3 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on submitting issues, pu
 
 **Maintained by**: Your Organization
 **Active Contributors**: See [CONTRIBUTORS.md](./CONTRIBUTORS.md)
-**Last Updated**: June 15, 2026
-**Version**: 1.9.0 ✅
